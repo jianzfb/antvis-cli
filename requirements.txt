@@ -1,0 +1,7 @@
+requests
+numpy
+scipy
+Pillow
+webdavclient3
+psutil
+GitPython
