@@ -9,7 +9,7 @@ from __future__ import print_function
 from antvis.client.mlogger.metric.base import *
 from antvis.client.dashboard import *
 from antvis.client import mlogger
-
+import time
 
 class Image(Base):
     def __init__(self, plot_title, **kwargs):
@@ -125,8 +125,21 @@ class Text(Base):
             
         self._val = val
         self.channel.update(self.time, self.value)
-        
-        
+
+    def _timestamp(self):
+        time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
+        return time_str
+
+    def info(self, val):
+        self.update("{} [INFO]\t{}".format(self._timestamp(), val))
+
+    def debug(self, val):
+        self.update("{} [DEBUG]\t{}".format(self._timestamp(), val))
+
+    def warn(self, val):
+        self.update("{} [WARN]\t{}".format(self._timestamp(), val))
+
+
 class Table(Base):
     def __init__(self, plot_title, **kwargs):
         super(Table, self).__init__(plot_title, 'complex', **kwargs)

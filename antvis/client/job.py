@@ -72,9 +72,9 @@ class Chart(object):
   def bind_channel(self, channel):
     if len(self.chart_channels) != 0:
       assert(channel.channel_type == self.chart_channels[0].channel_type)
-    
+
     # 检查是否支持multi-channel
-    if len(self.chart_channels) > 0 and channel.channel_type not in ['SCATTER', 'LINE', 'HISTOGRAM', 'BAR', 'TEXT']:
+    if len(self.chart_channels) > 0 and channel.channel_type not in ['SCATTER', 'LINE', 'HISTOGRAM', 'BAR', 'TEXT', 'IMAGE']:
       logging.error('channel type %s not support multi-channel in one chart'%channel.channel_type)
       raise NotImplementedError
       
@@ -445,7 +445,10 @@ class Job(threading.Thread):
               data_package['CHART'][chart_uuid]['channels'][channel_id]['channel_data'].extend(item['CHART']['channel_data'])
             else:
               data_package['CHART'][chart_uuid]['channels'][channel_id]['channel_data'] = item['CHART']['channel_data']
-      
+
+          if data_package['CHART'][chart_uuid]['chart_channels'] < len(data_package['CHART'][chart_uuid]['channels']):
+            data_package['CHART'][chart_uuid]['chart_channels'] = len(data_package['CHART'][chart_uuid]['channels'])
+
       # 4.step remote call
       experiment_data = \
         {'experiment_name': self.dashboard.experiment_name,
