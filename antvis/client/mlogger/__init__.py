@@ -80,6 +80,11 @@ def exit():
     __env.dashboard.exit()
 
 
+def error():
+    global __env
+    __env.dashboard.error()
+
+
 def create_project(project, experiment):
     # 创建实验
     global __env
@@ -136,7 +141,12 @@ def Context(ip, port, project, experiment, token=None, path='.'):
     tag.note.content = ''               # a descriptive note about experiment run
     tag.runname = ''                    # human readable name that identify experiment run
 
-    yield
+    try:
+        yield
+    except:
+        # 实验错误
+        error()
+        return
 
     # 更新&退出
     update()

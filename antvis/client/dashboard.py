@@ -216,12 +216,19 @@ class Dashboard(object):
     
     def exit(self):
         # exit dashboard
+        # exit resource
+        self.job.exit()
+
         # stop flag
         self.rpc.experiment.stop.post()
 
+    def error(self):
         # exit resource
         self.job.exit()
-    
+
+        # error flag
+        self.rpc.experiment.error.post()
+
     def __getattr__(self, key):
         if key in ['experiment', 'task', 'apply', 'dataset', 'challenge', 'benchmark']:
             return getattr(self.rpc, key)
