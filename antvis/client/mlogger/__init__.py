@@ -141,16 +141,10 @@ def Context(ip, port, project, experiment, token=None, path='.'):
     tag.note.content = ''               # a descriptive note about experiment run
     tag.runname = ''                    # human readable name that identify experiment run
 
-    try:
-        yield
-    except:
-        # 实验错误
-        error()
-        return
+    yield
 
     # 更新&退出
     update()
-    exit()
 
 
 class Tag(object):
@@ -177,7 +171,7 @@ class Tag(object):
 
                 data = mlogger.getEnv().dashboard.rpc.experiment.tag.get(tag=self._parent)
                 if data['status'] == 'OK':
-                    return data['content']
+                    return data['content']['value']
 
                 return ''
             return _func

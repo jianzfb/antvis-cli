@@ -11,10 +11,10 @@ from antvis.client.dashboard import *
 from antvis.client import mlogger
 import time
 
+
 class Image(Base):
     def __init__(self, plot_title, **kwargs):
         super(Image, self).__init__(plot_title, 'complex', **kwargs)
-
         self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='IMAGE', **self.channel_config)
         
     @property
@@ -35,6 +35,9 @@ class Image(Base):
         
         self._val = val
         self.channel.update(self.time, self.value)
+
+    def _get(self, data):
+        return data
 
 
 class Histogram(Base):
@@ -145,7 +148,6 @@ class Table(Base):
         super(Table, self).__init__(plot_title, 'complex', **kwargs)
 
         self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='TABLE', **self.channel_config)
-        self._val = []
 
     @property
     def value(self):

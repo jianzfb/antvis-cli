@@ -170,7 +170,7 @@ class Dashboard(object):
     def activate(self, project, experiment):
         if project is None or experiment is None:
             print('must set project and experiment')
-            return
+            return None
 
         # 1.step 获得experiment_uuid
         response = self.rpc.experiment.activate.get(experiment_name=experiment, project_name=project)
@@ -181,8 +181,10 @@ class Dashboard(object):
             print('activate experiment %s/%s'%(response['content']['project_name'], response['content']['experiment_name']))
             # 更新rpc的实验标识字段
             self.rpc.data.update({'experiment_uuid': self.experiment_uuid})
+            return self.experiment_uuid
         else:
             print('couldnt activate %s/%s'%(project, experiment))
+            return None
 
     def list(self, project=None):
         response = self.rpc.experiment.list.get(project_name=project)

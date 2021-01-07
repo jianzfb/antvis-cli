@@ -19,9 +19,18 @@ class CPU(Base):
         self.chart_x_axis = 'time'
         self.chart_y_axis = 'percent'
 
-        self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.channel_min = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.channel_max = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
+        self.channel =\
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
+        self.channel_min = \
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
+        self.channel_max =\
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
 
         self.reset()
 
@@ -59,13 +68,16 @@ class CPU(Base):
         return self._avg
 
     def reset(self):
-        self._avg = 0
+        self._avg = None
         self._max_val = -np.inf
         self._min_val = np.inf
         self._total_weight = 0
         return self
 
     def _update(self, *args, **kwargs):
+        if self._avg is None:
+            self._avg = 0.0
+
         # 获取cpu占用率
         val = psutil.cpu_percent(0)
 
@@ -91,9 +103,18 @@ class Memory(Base):
         self.chart_x_axis = 'time'
         self.chart_y_axis = 'percent'
 
-        self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.channel_min = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.channel_max = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
+        self.channel = \
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
+        self.channel_min = \
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
+        self.channel_max = \
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
 
         self.reset()
 
@@ -131,13 +152,16 @@ class Memory(Base):
         return self._avg
 
     def reset(self):
-        self._avg = 0
+        self._avg = None
         self._max_val = -np.inf
         self._min_val = np.inf
         self._total_weight = 0
         return self
 
     def _update(self, *args, **kwargs):
+        if self._avg is None:
+            self._avg = 0.0
+
         # 获取内存占用率
         val = psutil.virtual_memory().percent
 
@@ -163,9 +187,18 @@ class GPU(Base):
         self.chart_x_axis = 'time'
         self.chart_y_axis = 'percent'
 
-        self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.channel_min = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.channel_max = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
+        self.channel = \
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
+        self.channel_min = \
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
+        self.channel_max =\
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
 
         self.reset()
 
@@ -203,7 +236,7 @@ class GPU(Base):
         return self._avg
 
     def reset(self):
-        self._avg = 0
+        self._avg = None
         self._max_val = -np.inf
         self._min_val = np.inf
         self._total_weight = 0
@@ -229,6 +262,9 @@ class GPU(Base):
             return 0.0
 
     def _update(self, *args, **kwargs):
+        if self._avg is None:
+            self._avg = 0.0
+
         # 获取内存占用率
         val = self.get_gpu_percent()
 
@@ -254,11 +290,18 @@ class GPUMemory(Base):
         self.chart_x_axis = 'time'
         self.chart_y_axis = 'MB'
 
-        self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.channel_min = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE',
-                                                           **self.channel_config)
-        self.channel_max = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE',
-                                                           **self.channel_config)
+        self.channel = \
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
+        self.channel_min = \
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
+        self.channel_max = \
+            mlogger.getEnv().create_channel(str(uuid.uuid4()),
+                                            channel_type='LINE',
+                                            **self.channel_config)
 
         self.reset()
 
@@ -296,7 +339,7 @@ class GPUMemory(Base):
         return self._avg
 
     def reset(self):
-        self._avg = 0
+        self._avg = None
         self._max_val = -np.inf
         self._min_val = np.inf
         self._total_weight = 0
@@ -322,6 +365,9 @@ class GPUMemory(Base):
             return 0.0
 
     def _update(self, *args, **kwargs):
+        if self._avg is None:
+            self._avg = 0.0
+
         # 获取内存占用率
         val = self.get_video_memory()
 

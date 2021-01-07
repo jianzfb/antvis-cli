@@ -351,6 +351,7 @@ class Job(threading.Thread):
     self.dashboard_ip = self.dashboard.dashboard_ip
     self.dashboard_port = self.dashboard.dashboard_port
     self.dashboard_prefix = 'http'
+    self.daemon = True
   
   def create_channel(self, channel_name, channel_type, **kwargs):
     return Channel(channel_name, channel_type, self, **kwargs)
@@ -393,9 +394,10 @@ class Job(threading.Thread):
     if len(self.cache_data) > 0:
       self.data_queue.put(self.cache_data)
       self.cache_data = []
-  
+
   def exit(self):
     self.data_queue.put(ExitSig())
+    self.join()
   
   def run(self):
     while True:

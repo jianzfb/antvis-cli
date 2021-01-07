@@ -150,11 +150,14 @@ class Accumulator_(Base):
         self.reset()
 
     def reset(self):
-        self._avg = 0
+        self._avg = None
         self._total_weight = 0
         return self
 
     def _update(self, val, weighting=1):
+        if self._avg is None:
+            self._avg = 0
+
         val, weighting = float(val), float(weighting)
         assert weighting > 0
         r = self._total_weight / (weighting + self._total_weight)
@@ -192,6 +195,9 @@ class Sum(Accumulator_):
 
     @property
     def value(self):
+        if self._avg is None:
+            return None
+
         return self._avg * self._total_weight
 
 
@@ -206,11 +212,14 @@ class Maximum(Base):
         self.reset()
 
     def reset(self):
-        self._val = -np.inf
+        self._val = None
         self.hooks_on_new_max = ()
         return self
 
     def _update(self, val, n=None):
+        if self._val is None:
+            self._val = -np.inf
+
         val = float(val)
         if val > self._val:
             self._val = val
@@ -246,11 +255,14 @@ class Minimum(Base):
         self.reset()
 
     def reset(self):
-        self._val = np.inf
+        self._val = None
         self.hooks_on_new_min = ()
         return self
 
     def _update(self, val, n=None):
+        if self._val is None:
+            self._val = np.inf
+
         val = float(val)
         if val < self._val:
             self._val = val

@@ -11,6 +11,10 @@ import time
 
 from collections import defaultdict, OrderedDict
 from antvis.client import mlogger
+import logging
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(filename)s[:%(lineno)d] - %(message)s"
+DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
+logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
 
 class Base(object):
@@ -29,6 +33,7 @@ class Base(object):
         self.time = 0
         self.logger_type = logger_type
         self.channel_config = kwargs
+        self._val = None
 
     def config(self, **kwargs):
         if 'x_axis' in kwargs:
@@ -47,7 +52,11 @@ class Base(object):
             hook()
         self.time += 1
         return self
-    
+
+    @property
+    def value(self):
+        raise NotImplementedError
+
     @property
     def name(self):
         return self.channel.channel_name
@@ -88,19 +97,23 @@ class Base(object):
     def _update(self, *args, **kwargs):
         raise NotImplementedError("_update should be re-implemented for each metric")
 
-    def log(self):
-        v = getattr(self, 'value', None)
-        if v is not None:
-            print('%s - value %f'%(self.chart.chart_title, v))
+    def _get(self, data):
+        return data
 
-    def get(self):
+    def get(self, kind='current'):
+        assert(kind in ['current', 'history'])
+        # 1.step 优先使用本地数据
+        if self.value is not None and kind == 'current':
+            return {'value': self.value, 'type': 'current'}
+
+        # 2.step 使用远程数据
         channel_name = self.channel.channel_name
         chart_name = self.chart.chart_title
 
-        rpc = mlogger.getEnv().dashboard.rpc
         data = \
-            rpc.experiment.chart.get(chart_name=chart_name,
-                                     channel_name=channel_name)
+            mlogger.getEnv().dashboard.\
+                rpc.experiment.chart.get(chart_name=chart_name,
+                                         channel_name=channel_name)
         if data['status'] == 'OK':
-            return data['content']
-        return {}
+            return {'value': self._get(data['content']), 'type': 'history'}
+        return None
