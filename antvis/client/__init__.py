@@ -17,6 +17,9 @@ def handle_exit():
   global __exit_flag
   if not __exit_flag:
     # project/experiment
+    if mlogger.getEnv() is None or mlogger.getEnv().dashboard is None:
+      return
+
     project = mlogger.getEnv().dashboard.project
     experiment = mlogger.getEnv().dashboard.experiment_name
 
@@ -31,6 +34,8 @@ def handle_exit():
 def handle_exception(exc_type, exc_value, exc_traceback):
   global __exit_flag
   __exit_flag = True
+  if mlogger.getEnv() is None or mlogger.getEnv().dashboard is None:
+    return
 
   project = mlogger.getEnv().dashboard.project
   experiment = mlogger.getEnv().dashboard.experiment_name

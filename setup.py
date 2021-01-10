@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='antvis',
-      version='0.1.1',
+      version='0.1.2',
       description='machine learning manage client',
       __short_description__='machine learning manage client',
       url='http://www.mltalker.com',

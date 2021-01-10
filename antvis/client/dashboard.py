@@ -18,7 +18,8 @@ class Dashboard(object):
                  dashboard_ip=None,
                  dashboard_port=None,
                  token=None,
-                 experiment_uuid=None):
+                 experiment_uuid=None,
+                 **kwargs):
         self._dashboard_ip = dashboard_ip
         self._dashboard_port = dashboard_port
         self._dashboard_prefix = 'antvis'
@@ -27,7 +28,7 @@ class Dashboard(object):
         self._project = None
         self._experiment_name = None
         
-        self._server = "FREE"
+        self._server = kwargs.get('server', "EXPLORE")
         self._experiment_uuid = None
         self._token = None
         self._hyper_parameter = ''

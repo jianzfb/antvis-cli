@@ -16,8 +16,8 @@ import git
 
 
 class __Env(object):
-    def __init__(self, ip, port, project=None, experiment=None, token=None):
-        self.dashboard = Dashboard(ip, port, token=token)
+    def __init__(self, ip, port, project=None, experiment=None, token=None, **kwargs):
+        self.dashboard = Dashboard(ip, port, token=token, **kwargs)
         if project is not None and experiment is not None:
             self.dashboard.create_project(project=project, experiment=experiment)
         
@@ -65,24 +65,27 @@ def getEnv():
     return __env
 
 
-def config(ip, port, project=None, experiment=None, token=None):
+def config(ip, port, project=None, experiment=None, token=None, **kwargs):
     global __env
-    __env = __Env(ip, port, project, experiment, token)
+    __env = __Env(ip, port, project, experiment, token, **kwargs)
     
     
 def update():
     global __env
-    __env.dashboard.update()
+    if __env.dashboard is not None:
+        __env.dashboard.update()
     
     
 def exit():
     global __env
-    __env.dashboard.exit()
+    if __env.dashboard is not None:
+        __env.dashboard.exit()
 
 
 def error():
     global __env
-    __env.dashboard.error()
+    if __env.dashboard is not None:
+        __env.dashboard.error()
 
 
 def create_project(project, experiment):
