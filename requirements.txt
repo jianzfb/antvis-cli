@@ -5,3 +5,4 @@ Pillow
 webdavclient3
 psutil
 GitPython
+cos-python-sdk-v5
