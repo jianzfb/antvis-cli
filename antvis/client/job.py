@@ -21,7 +21,7 @@ from antvis.utils.utils import *
 from antvis.utils.encode import *
 import json
 from PIL import Image
-
+import zlib
 
 PYTHON_VERSION = sys.version_info[0]
 if PYTHON_VERSION == 2:
@@ -455,9 +455,9 @@ class Job(threading.Thread):
       experiment_data = \
         {'experiment_name': self.dashboard.experiment_name,
          'experiment_uuid': self.dashboard.experiment_uuid,
-         'experiment_data': json.dumps(data_package),
+         'experiment_data': zlib.compress(json.dumps(data_package).encode()),
          'experiment_stage': data[0]['APP_STAGE'],
          'experiment_hyper_parameter': data[0]['APP_HYPER_PARAMETER']}
-      
+
       if self.dashboard != None:
         self.dashboard.rpc.experiment.patch(**experiment_data)
