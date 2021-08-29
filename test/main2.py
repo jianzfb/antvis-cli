@@ -12,7 +12,7 @@ if __name__ == "__main__":
   mlogger.config('127.0.0.1',
                  8999,
                  'det',
-                 'g',
+                 'b',
                  token='3bdbf5aa1c274b05971bdf2b58508816')
 
   # 2.step 设置实验标签
@@ -57,6 +57,7 @@ if __name__ == "__main__":
   container_2.check_heatmap = mlogger.complex.Heatmap('check-heatmap')
   container_2.check_heatmap.update(np.random.randint(0, 255, (500, 500)))
   mlogger.update()
+  print('sdf')
 
   # 2.6.step 配置绘制图表——Text
   container_2.check_text = mlogger.complex.Text('check-text')

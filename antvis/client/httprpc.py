@@ -12,6 +12,7 @@ import tarfile
 import sys
 import urllib
 import uuid
+import gzip
 
 
 class Resource(object):
@@ -227,7 +228,7 @@ class Resource(object):
             api_url = '%s/%s/'%(self._rpc.url, self._resource)
             if self._rpc.data is not None and type(self._rpc.data) == dict:
                 kwargs.update(self._rpc.data)
-            
+
             try:
                 if action == 'get':
                     result = requests.get(api_url, kwargs, headers=self._rpc.headers)

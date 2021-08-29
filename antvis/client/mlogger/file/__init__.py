@@ -11,8 +11,6 @@ import tarfile
 import json
 import uuid
 from antvis.client.mlogger.metric.base import *
-from qcloud_cos import CosConfig
-from qcloud_cos import CosS3Client
 import sys
 import logging
 

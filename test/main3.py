@@ -11,11 +11,11 @@ import time
 
 
 if __name__ == "__main__":
-  mlogger.config('127.0.0.1',
-                 8999,
-                 token='3bdbf5aa1c274b05971bdf2b58508816')
-  project = 'det'
-  experiment = 'g'
+  mlogger.config('59.110.164.237',
+                 8080,
+                 token='acee26bd077d4f55afa8dad3f5828fb2')
+  project = 'you'
+  experiment = 'jian10'
   mlogger.activate(project, experiment)
 
   # 测试实验标签获取
@@ -32,5 +32,5 @@ if __name__ == "__main__":
   container_1.after = mlogger.FileLogger('after-1')
   container_1.before = mlogger.FileLogger('before-1')
 
-  container_1.after.update('/Users/jian/Downloads/iqiyi_1610978950796.png')
+  container_1.after.update('/Users/jian/Downloads/bdd79fec-1ad0-405f-bea9-557300b33993-db928c27-f234-463b-a073-81941824f701_1-200413093331.zip')
   container_1.before.update('/Users/jian/Downloads/character.jpg')
