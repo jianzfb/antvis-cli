@@ -8,7 +8,7 @@ from __future__ import print_function
 
 import atexit
 import sys
-import antvis.client.mlogger as mlogger
+from . import mlogger
 
 __exit_flag = False
 
