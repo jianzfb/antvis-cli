@@ -15,14 +15,12 @@ import logging
 
 class Dashboard(object):
     def __init__(self,
-                 dashboard_ip=None,
-                 dashboard_port=None,
                  token=None,
                  experiment_uuid=None,
                  **kwargs):
-        self._dashboard_ip = dashboard_ip
-        self._dashboard_port = dashboard_port
-        self._dashboard_prefix = 'antvis'
+        self._dashboard_ip = '121.40.35.60'         # ip
+        self._dashboard_port = 8000                 # port
+        self._dashboard_prefix = 'api/antvis'
         self.launch_time = timestamp()
         self.quiet = False
         self._project = None
@@ -160,17 +158,17 @@ class Dashboard(object):
             self.experiment_uuid = experiment_uuid
             
             self.rpc.data.update({'experiment_uuid': experiment_uuid})
-            logging.info('success to create %s/%s'%(self.project, self.experiment_name))
+            logging.info('Success to create %s/%s'%(self.project, self.experiment_name))
         else:
             self.experiment_uuid = None
-            logging.error('fail to register experiment in dashboard')
+            logging.error('Fail to register experiment in dashboard')
 
 
         return experiment_uuid
 
     def activate(self, project, experiment):
         if project is None or experiment is None:
-            print('must set project and experiment')
+            logging.error('Must set project and experiment')
             return None
 
         # 1.step 获得experiment_uuid
@@ -179,12 +177,12 @@ class Dashboard(object):
             self.experiment_uuid = response['content']['experiment_uuid']
             self.experiment_name = experiment
             self.project = project
-            print('activate experiment %s/%s'%(response['content']['project_name'], response['content']['experiment_name']))
+            logging.info('Activate experiment %s/%s'%(response['content']['project_name'], response['content']['experiment_name']))
             # 更新rpc的实验标识字段
             self.rpc.data.update({'experiment_uuid': self.experiment_uuid})
             return self.experiment_uuid
         else:
-            print('couldnt activate %s/%s'%(project, experiment))
+            logging.info('Couldnt activate %s/%s'%(project, experiment))
             return None
 
     def list(self, project=None):

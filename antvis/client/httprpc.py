@@ -13,6 +13,7 @@ import sys
 import urllib
 import uuid
 import gzip
+import logging
 
 
 class Resource(object):
@@ -56,14 +57,14 @@ class Resource(object):
                 if result.status_code not in [200, 201]:
                     fail_blocks[chunk_id] = content
                     if len(fail_blocks) > 100:
-                        print('always fail update, exit')
+                        logging.error('Always fail update, exit')
                         return
 
         if len(fail_blocks) > 0:
             for chunk_id, chuck_content in fail_blocks.items():
                 result = requests.post(api_url, kwargs, files={'file': content}, headers=self._rpc.headers)
                 if result.status_code not in [200, 201]:
-                    print('always fail update, exit')
+                    logging.error('Always fail update, exit')
                     return
 
     def upload(self, *args, **kwargs):
@@ -202,9 +203,9 @@ class Resource(object):
                     if chunk:
                         pf.write(chunk)
 
-            print('successfully download {}'.format(download_file_name))
+            logging.info('Successfully download {}'.format(download_file_name))
         except:
-            print('failed to download {}'.format(download_file_name))
+            logging.error('Failed to download {}'.format(download_file_name))
             if os.path.exists(os.path.join(to_folder, download_file_name)) and \
                     os.path.isfile(os.path.join(to_folder, download_file_name)):
                 os.remove(os.path.join(to_folder, download_file_name))
@@ -216,7 +217,7 @@ class Resource(object):
             tar = tarfile.open(os.path.join(to_folder, download_file_name))
             tar.extractall(to_folder)
             tar.close()
-            print('successfully untar {}'.format(download_file_name))
+            logging.info('Successfully untar {}'.format(download_file_name))
     
         return {'status': 'SUCCESS'} if is_success else {'status': 'ERROR'}
     

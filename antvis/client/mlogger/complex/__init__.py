@@ -10,6 +10,7 @@ from antvis.client.mlogger.metric.base import *
 from antvis.client.dashboard import *
 from antvis.client import mlogger
 import time
+import logging
 
 
 class Image(Base):
@@ -26,7 +27,7 @@ class Image(Base):
             val = np.array(val)
         
         if type(val) != np.ndarray:
-            print('image logger dont support non numpy.ndarray data')
+            logging.error('Image logger dont support non numpy.ndarray data')
             raise NotImplementedError
         
         assert(len(val.shape) == 2 or len(val.shape) == 3)
@@ -200,7 +201,7 @@ class Scatter(Base):
             val = np.array(val)
 
         if type(val) != np.ndarray:
-            print('image logger dont support non numpy.ndarray data')
+            logging.error('Image logger dont support non numpy.ndarray data')
             raise NotImplementedError
 
         assert (len(val.shape) == 2)

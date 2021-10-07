@@ -13,11 +13,12 @@ from antvis.client.mlogger.monitor import *
 from antvis.client.mlogger.file import *
 from contextlib import contextmanager
 import git
+import logging
 
 
 class __Env(object):
-    def __init__(self, ip, port, project=None, experiment=None, token=None, **kwargs):
-        self.dashboard = Dashboard(ip, port, token=token, **kwargs)
+    def __init__(self, project=None, experiment=None, token=None, **kwargs):
+        self.dashboard = Dashboard(token=token, **kwargs)
         if project is not None and experiment is not None:
             self.dashboard.create_project(project=project, experiment=experiment)
         
@@ -65,9 +66,9 @@ def getEnv():
     return __env
 
 
-def config(ip, port, project=None, experiment=None, token=None, **kwargs):
+def config(project=None, experiment=None, token=None, **kwargs):
     global __env
-    __env = __Env(ip, port, project, experiment, token, **kwargs)
+    __env = __Env(project, experiment, token, **kwargs)
     
     
 def update():
@@ -128,7 +129,7 @@ def Context(ip, port, project, experiment, token=None, path='.'):
         if len(commits) > 0:
             git_commit = commits[0]
     except:
-        print('project %s experiment %s no git info'%(project, experiment))
+        logging.error('Project %s experiment %s no git info'%(project, experiment))
 
     # 配置实验信息
     tag.source.name = ''                # source identify (git URL, source file name, notebook name)

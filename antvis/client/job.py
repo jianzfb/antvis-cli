@@ -123,8 +123,8 @@ class Channel(object):
     self.channel_name = val
 
   def transform_to_svg(self, data):
-    x,y = data
-    return x,y
+    x, y = data
+    return x, y
   
   def transform_to_image(self, data):
     data_x, data_y = data
@@ -142,18 +142,9 @@ class Channel(object):
         if data_y.shape[2] != 3:
           logging.error("Channel Y Must Possess 3 or 1 Channels")
           return None
-
-      if data_y.dtype == np.uint8:
-        return (data_x, base64.b64encode(png_encode(data_y)).decode('utf-8'))
-
-      max_val = np.max(data_y.flatten())
-      min_val = np.min(data_y.flatten())
-      if len(data_y.shape) == 3:
-        data_y = ((data_y - np.tile(min_val, (1,1,3))) / np.tile(max_val, (1,1,3))) * 255
-        data_y = data_y.astype(np.uint8)
-      else:
-        data_y = (data_y - min_val) / max_val * 255
-        data_y = data_y.astype(np.uint8)
+      if data_y.dtype != np.uint8:
+        logging.error('Image type must be np.uint8')
+        return None
 
       return (data_x, base64.b64encode(png_encode(data_y)).decode('utf-8'))
     except:

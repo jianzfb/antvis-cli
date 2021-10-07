@@ -9,7 +9,7 @@ from __future__ import print_function
 import atexit
 import sys
 from . import mlogger
-
+import logging
 __exit_flag = False
 
 
@@ -20,15 +20,20 @@ def handle_exit():
     if mlogger.getEnv() is None or mlogger.getEnv().dashboard is None:
       return
 
+    #
     project = mlogger.getEnv().dashboard.project
     experiment = mlogger.getEnv().dashboard.experiment_name
 
     if project is not None and experiment is not None:
-      # exit
+      # 更新未上传数据
+      mlogger.update()
+
+      # 日志退出
+      logging.info('Prepare exit {}/{} experiment logger'.format(project, experiment))
       mlogger.exit()
 
       # print log
-      print('finish {}/{} experiment logger'.format(project, experiment))
+      logging.info('Finish {}/{} experiment logger'.format(project, experiment))
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -46,7 +51,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     # print error info
     print(exc_traceback)
     # print log
-    print('error {}/{} experiment logger'.format(project, experiment))
+    logging.error('Error {}/{} experiment logger'.format(project, experiment))
 
 
 sys.excepthook = handle_exception
