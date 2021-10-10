@@ -1,7 +1,6 @@
 requests
 numpy
-scipy
 Pillow
 psutil
 GitPython
-cos-python-sdk-v5
+qiniu

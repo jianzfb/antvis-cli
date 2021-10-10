@@ -147,16 +147,16 @@ class Accumulator_(Base):
         self.chart_y_axis = ''
 
         self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.reset()
+        self._avg = None
 
     def reset(self):
-        self._avg = None
+        self._avg = 0.0
         self._total_weight = 0
         return self
 
     def _update(self, val, weighting=1):
         if self._avg is None:
-            self._avg = 0
+            self.reset()
 
         val, weighting = float(val), float(weighting)
         assert weighting > 0
@@ -209,16 +209,16 @@ class Maximum(Base):
         self.chart_y_axis = ''
 
         self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.reset()
+        self._val = None
 
     def reset(self):
-        self._val = None
+        self._val = -np.inf
         self.hooks_on_new_max = ()
         return self
 
     def _update(self, val, n=None):
         if self._val is None:
-            self._val = -np.inf
+            self.reset()
 
         val = float(val)
         if val > self._val:
@@ -252,16 +252,16 @@ class Minimum(Base):
         self.chart_y_axis = ''
 
         self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
-        self.reset()
+        self._val = None
 
     def reset(self):
-        self._val = None
+        self._val = np.inf
         self.hooks_on_new_min = ()
         return self
 
     def _update(self, val, n=None):
         if self._val is None:
-            self._val = np.inf
+            self.reset()
 
         val = float(val)
         if val < self._val:

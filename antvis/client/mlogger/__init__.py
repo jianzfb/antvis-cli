@@ -21,43 +21,30 @@ class __Env(object):
         self.dashboard = Dashboard(token=token, **kwargs)
         if project is not None and experiment is not None:
             self.dashboard.create_project(project=project, experiment=experiment)
-        
-        self._webdav_host = None
-        self._webdav_login = None
-        self._webdav_password = None
-        self._webdav_root = ''
-        self.use_webdav = False
-        
+
+        self.cache_upload_token = {}
+
     def create_chart(self, *args, **kwargs):
         return self.dashboard.create_chart(*args, **kwargs)
         
     def create_channel(self, *args, **kwargs):
         return self.dashboard.create_channel(*args, **kwargs)
-    
-    @property
-    def webdav_host(self):
-        return self._webdav_host
-    
-    @property
-    def webdav_login(self):
-        return self._webdav_login
-    
-    @property
-    def webdav_password(self):
-        return self._webdav_password
-    
-    @property
-    def webdav_root(self):
-        return self._webdav_root
-    
-    def webdav(self, host, login, password, root=''):
-        self._webdav_host = host
-        self._webdav_login = login
-        self._webdav_password = password
-        self._webdav_root = root
-        self.use_webdav = True
-    
-        
+
+    def getUploadToken(self, mode):
+        if mode not in self.cache_upload_token or (time.time() - self.cache_upload_token[mode]['time']) > self.cache_upload_token[mode]['expire']:
+            response = \
+                self.dashboard.rpc.cos.experiment.get(cos='QINIU', mode=mode, operator='upload')
+            if response['status'] == 'ERROR':
+                logging.error('Could get cos token (maybe exceed your storage limit).')
+                return None
+
+            self.cache_upload_token[mode] = response['content']
+            self.cache_upload_token[mode].update({
+                'time': time.time()
+            })
+
+        return self.cache_upload_token[mode]
+
 __env = None
 
 
@@ -111,13 +98,13 @@ def list(project=None):
 
 
 @contextmanager
-def Context(ip, port, project, experiment, token=None, path='.'):
+def Context(project, experiment, token=None, path='.'):
     # 创建实验基本信息
     global __env
     global tag
     # 配置平台
     assert(project is not None and experiment is not None)
-    config(ip, port, project, experiment, token)
+    config(project, experiment, token)
 
     # 获取git信息
     git_commit = ''

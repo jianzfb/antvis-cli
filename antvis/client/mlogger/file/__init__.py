@@ -10,9 +10,13 @@ import os
 import tarfile
 import json
 import uuid
-from antvis.client.mlogger.metric.base import *
 import sys
+from antvis.client.mlogger.metric.base import *
 import logging
+from qiniu import Auth, put_file, etag
+import qiniu.config
+import requests
+import zlib
 
 
 class FileLogger(object):
@@ -44,8 +48,6 @@ class FileLogger(object):
         self.group_name = group_name
 
     def update(self, *args, **kwargs):
-        # 支持WEBDAV, MLTALKER
-        # antvis/experiment_uuid/group/%s_(latest_%d).xxx
         if len(args) == 0:
             return
 
@@ -62,53 +64,71 @@ class FileLogger(object):
         fsize = fsize / float(1024 * 1024)
         fsize = round(fsize, 2)
 
+        # 腾讯COS
+        # # 1.step 获得临时秘钥
+        # response = \
+        #   mlogger.getEnv().dashboard.rpc.cos.experiment.get(file_size=fsize,
+        #                                                     operator='upload')
+        # if response['status'] == 'ERROR':
+        #   logging.error('could get cos credential')
+        #   return
+        #
+        # tmpSecretId = response['content']['tmpSecretId']
+        # tmpSecretKey = response['content']['tmpSecretKey']
+        # sessionToken = response['content']['sessionToken']
+        # region = response['content']['region']
+        # bucket = response['content']['bucket']
+        #
+        # # 2.step 上传文件
+        # tag_str = self.tag if self.group_name == '' else '%s/%s' % (self.group_name, self.tag)
+        # try:
+        #   config = CosConfig(Region=region,
+        #                      SecretId=tmpSecretId,
+        #                      SecretKey=tmpSecretKey,
+        #                      Token=sessionToken,
+        #                      Scheme='https')
+        #   client = CosS3Client(config)
+        #   with open(local_file_path, 'rb') as fp:
+        #     client.put_object(
+        #         Bucket=bucket,
+        #         Body=fp,
+        #         Key='{}/{}/{}/{}'.format(self.experiment_uuid, tag_str, self.title, file_name),
+        #         StorageClass='STANDARD',
+        #         EnableMD5=False
+        #       )
+        # except:
+        #   logging.error('upload {} error'.format(local_file_path))
+        #   return
+
+        # 七牛COS
         # 1.step 获得临时秘钥
-        response = \
-          mlogger.getEnv().dashboard.rpc.cos.experiment.get(file_size=fsize,
-                                                            operator='upload')
-        if response['status'] == 'ERROR':
-          logging.error('could get cos credential')
-          return
+        info = mlogger.getEnv().getUploadToken('log/file')
+        if info is None:
+            logging.error('Could get cos token (maybe exceed your storage limit).')
+            return None
+        token = info['token']
+        user = info['user']
 
-        tmpSecretId = response['content']['tmpSecretId']
-        tmpSecretKey = response['content']['tmpSecretKey']
-        sessionToken = response['content']['sessionToken']
-        region = response['content']['region']
-        bucket = response['content']['bucket']
-
-        # 2.step 上传文件
         tag_str = self.tag if self.group_name == '' else '%s/%s' % (self.group_name, self.tag)
-        try:
-          config = CosConfig(Region=region,
-                             SecretId=tmpSecretId,
-                             SecretKey=tmpSecretKey,
-                             Token=sessionToken,
-                             Scheme='https')
-          client = CosS3Client(config)
-          with open(local_file_path, 'rb') as fp:
-            client.put_object(
-                Bucket=bucket,
-                Body=fp,
-                Key='{}/{}/{}/{}'.format(self.experiment_uuid, tag_str, self.title, file_name),
-                StorageClass='STANDARD',
-                EnableMD5=False
-              )
-        except:
-          logging.error('upload {} error'.format(local_file_path))
-          return
+        key = 'antvis/{}/{}/{}/{}/{}'.format(user, self.experiment_uuid, tag_str, self.title, file_name)
+        ret, info = put_file(token, key, local_file_path, version='v2')
+
+        if info.status_code != 200:
+            logging.error('Fail to upload.')
+            return
 
         # 3.step 更新平台记录
         mlogger.getEnv().dashboard.experiment.patch(**{
             'experiment_name': self.experiment_name,
             'experiment_uuid': self.experiment_uuid,
             'experiment_stage': mlogger.getEnv().dashboard.experiment_stage,
-            'experiment_data': json.dumps({'FILE_ABSTRACT': {
+            'experiment_data': zlib.compress(json.dumps({'FILE_ABSTRACT': {
                 'group': tag_str,
                 'title': self.title,
-                'backend': 'ANTVIS',
-                'path': '{}/{}/{}/{}'.format(self.experiment_uuid, tag_str, self.title, file_name),
+                'backend': 'QINIU',
+                'path': key,
                 'size': fsize,
-            }, 'APP_STAGE': mlogger.getEnv().dashboard.experiment_stage})
+            }, 'APP_STAGE': mlogger.getEnv().dashboard.experiment_stage}).encode())
         })
 
     def config(self, **kwargs):
@@ -118,36 +138,60 @@ class FileLogger(object):
         # 文件下载
         # 1.step 获取日志文件
         tag_str = self.tag if self.group_name == '' else '%s/%s' % (self.group_name, self.tag)
+        # response = \
+        #     mlogger.getEnv().dashboard.\
+        #         rpc.experiment.file.get(experiment_uuid=self.experiment_uuid,
+        #                                 key='{}/{}'.format(tag_str, self.title))
+        # if response['status'] == 'ERROR':
+        #   logging.error('couldnt get log file path')
+        #   return
+        #
+        # log_file = response['content']['path']
+        # log_name = log_file.split('/')[-1]
+        # tmpSecretId = response['content']['tmpSecretId']
+        # tmpSecretKey = response['content']['tmpSecretKey']
+        # sessionToken = response['content']['sessionToken']
+        # region = response['content']['region']
+        # bucket = response['content']['bucket']
+        #
+        # # 2.step 下载日志文件
+        # try:
+        #   config = CosConfig(Region=region,
+        #                      SecretId=tmpSecretId,
+        #                      SecretKey=tmpSecretKey,
+        #                      Token=sessionToken,
+        #                      Scheme='https')
+        #   client = CosS3Client(config)
+        #   response = client.get_object(Bucket=bucket, Key=log_file)
+        #   file_content = response['Body'].get_raw_stream()
+        #   with open('./{}'.format(log_name), 'wb') as fp:
+        #     fp.write(file_content.read())
+        # except:
+        #   logging.error('download {} error'.format(log_file))
+
+        # 七牛COS
+        # 1.step 获得临时秘钥
         response = \
-            mlogger.getEnv().dashboard.\
-                rpc.experiment.file.get(experiment_uuid=self.experiment_uuid,
-                                        key='{}/{}'.format(tag_str, self.title))
+          mlogger.getEnv().dashboard.rpc.cos.experiment.get(cos='QINIU',
+                                                            mode='log/file',
+                                                            operator='download',
+                                                            key='antvis/{}/'+'{}/{}/{}'.format(self.experiment_uuid, tag_str, self.title))
         if response['status'] == 'ERROR':
-          logging.error('couldnt get log file path')
+          logging.error('Could get cos token.')
           return
 
-        log_file = response['content']['path']
-        log_name = log_file.split('/')[-1]
-        tmpSecretId = response['content']['tmpSecretId']
-        tmpSecretKey = response['content']['tmpSecretKey']
-        sessionToken = response['content']['sessionToken']
-        region = response['content']['region']
-        bucket = response['content']['bucket']
+        response = response['content']
+        file_url = response['file_url']
+        file_name = response['file_name']
 
-        # 2.step 下载日志文件
         try:
-          config = CosConfig(Region=region,
-                             SecretId=tmpSecretId,
-                             SecretKey=tmpSecretKey,
-                             Token=sessionToken,
-                             Scheme='https')
-          client = CosS3Client(config)
-          response = client.get_object(Bucket=bucket, Key=log_file)
-          file_content = response['Body'].get_raw_stream()
-          with open('./{}'.format(log_name), 'wb') as fp:
-            fp.write(file_content.read())
+            r = requests.get(file_url, stream=True)
+            with open('./{}'.format(file_name), "wb") as pdf:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        pdf.write(chunk)
         except:
-          logging.error('download {} error'.format(log_file))
+            logging.error('Download {} error.'.format(file_name))
 
 
 class FolderLogger(FileLogger):
@@ -158,7 +202,6 @@ class FolderLogger(FileLogger):
         assert title != ''
 
     def update(self, *args, **kwargs):
-        # antvis/experiment_uuid/group/%s_(latest_%d).xxx
         if len(args) == 0:
             return
 

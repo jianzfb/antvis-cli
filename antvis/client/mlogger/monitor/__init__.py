@@ -32,7 +32,7 @@ class CPU(Base):
                                             channel_type='LINE',
                                             **self.channel_config)
 
-        self.reset()
+        self._avg = None
 
     @property
     def name(self):
@@ -68,7 +68,7 @@ class CPU(Base):
         return self._avg
 
     def reset(self):
-        self._avg = None
+        self._avg = 0.0
         self._max_val = -np.inf
         self._min_val = np.inf
         self._total_weight = 0
@@ -76,7 +76,7 @@ class CPU(Base):
 
     def _update(self, *args, **kwargs):
         if self._avg is None:
-            self._avg = 0.0
+            self.reset()
 
         # 获取cpu占用率
         val = psutil.cpu_percent(0)
@@ -116,7 +116,7 @@ class Memory(Base):
                                             channel_type='LINE',
                                             **self.channel_config)
 
-        self.reset()
+        self._avg = None
 
     @property
     def name(self):
@@ -152,7 +152,7 @@ class Memory(Base):
         return self._avg
 
     def reset(self):
-        self._avg = None
+        self._avg = 0.0
         self._max_val = -np.inf
         self._min_val = np.inf
         self._total_weight = 0
@@ -160,7 +160,7 @@ class Memory(Base):
 
     def _update(self, *args, **kwargs):
         if self._avg is None:
-            self._avg = 0.0
+            self.reset()
 
         # 获取内存占用率
         val = psutil.virtual_memory().percent
@@ -200,7 +200,7 @@ class GPU(Base):
                                             channel_type='LINE',
                                             **self.channel_config)
 
-        self.reset()
+        self._avg = None
 
     @property
     def name(self):
@@ -236,7 +236,7 @@ class GPU(Base):
         return self._avg
 
     def reset(self):
-        self._avg = None
+        self._avg = 0.0
         self._max_val = -np.inf
         self._min_val = np.inf
         self._total_weight = 0
@@ -263,7 +263,7 @@ class GPU(Base):
 
     def _update(self, *args, **kwargs):
         if self._avg is None:
-            self._avg = 0.0
+            self.reset()
 
         # 获取内存占用率
         val = self.get_gpu_percent()
@@ -303,7 +303,7 @@ class GPUMemory(Base):
                                             channel_type='LINE',
                                             **self.channel_config)
 
-        self.reset()
+        self._avg = None
 
     @property
     def name(self):
@@ -339,7 +339,7 @@ class GPUMemory(Base):
         return self._avg
 
     def reset(self):
-        self._avg = None
+        self._avg = 0.0
         self._max_val = -np.inf
         self._min_val = np.inf
         self._total_weight = 0
@@ -366,7 +366,7 @@ class GPUMemory(Base):
 
     def _update(self, *args, **kwargs):
         if self._avg is None:
-            self._avg = 0.0
+            self.reset()
 
         # 获取内存占用率
         val = self.get_video_memory()

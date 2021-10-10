@@ -38,6 +38,12 @@ class Image(Base):
         self.channel.update(self.time, self.value)
 
     def _get(self, data):
+        for x, y in zip(data['x'], data['y']):
+            r = requests.get(y, stream=True)
+            with open('./%s.png'%(str(x)), "wb") as pdf:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        pdf.write(chunk)
         return data
 
 

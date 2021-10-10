@@ -12,16 +12,17 @@ import numpy as np
 import re
 import copy
 import sys
-import scipy.misc
 import base64
 import os
 import logging
 import requests
 from antvis.utils.utils import *
 from antvis.utils.encode import *
+from antvis.client import mlogger
 import json
 from PIL import Image
 import zlib
+from qiniu import put_data
 
 PYTHON_VERSION = sys.version_info[0]
 if PYTHON_VERSION == 2:
@@ -146,7 +147,22 @@ class Channel(object):
         logging.error('Image type must be np.uint8')
         return None
 
-      return (data_x, base64.b64encode(png_encode(data_y)).decode('utf-8'))
+      info = mlogger.getEnv().getUploadToken('log/image')
+      if info is None:
+        logging.error('Could get cos token (maybe exceed your storage limit).')
+        return None
+
+      token = info['token']
+      user = info['user']
+      http_prefix = info['http_prefix']
+      file_name = '%s.png'%(str(uuid.uuid4()))
+      key = 'antvis/{}/{}/{}'.format(user, self.channel_job.dashboard.experiment_uuid, file_name)
+      ret, info = put_data(token, key, png_encode(data_y))
+      if info.status_code != 200:
+        logging.error('Fail to upload.')
+        return None
+
+      return (data_x, http_prefix+key)
     except:
       logging.error("Channel Y Must be Numpy Array")
 
