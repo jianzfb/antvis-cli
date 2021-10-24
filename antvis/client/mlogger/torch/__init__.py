@@ -6,31 +6,28 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 from torch import nn
-from antvis.client.mlogger.metric.base import *
 import torch
+from antvis.client.mlogger.metric.base import *
 import numpy as np
 import uuid
 
 
-class Image(nn.Module, Base):
+class Image(Base):
     def __init__(self, plot_title, **kwargs):
-        nn.Module.__init__(self)
         Base.__init__(self, plot_title, 'complex', **kwargs)
         self.channel =\
             mlogger.getEnv().create_channel(str(uuid.uuid4()),
                                             channel_type='IMAGE',
                                             **self.channel_config)
 
-    def forward(self, x):
+    def update(self, x):
         # tensor NCHW
         if len(x.shape) == 4 and x.shape[1] == 3 and x.dtype == torch.uint8:
-            data = x.cpu().data.numpy()
+            data = x.detach().cpu().data.numpy()
             for index in range(data.shape[0]):
-                self.update(data[index].transpose((1,2,0)))
+                super(Image, self).update(data[index].transpose((1, 2, 0)))
         else:
-            print('no image data, couldnt log')
-
-        return x
+            print('Only support channel = 3 or channel = 4, and dtype=torch.uint8.')
 
     @property
     def value(self):
@@ -52,9 +49,8 @@ class Image(nn.Module, Base):
         self.channel.update(self.time, self.value)
 
 
-class Histogram(nn.Module, Base):
+class Histogram(Base):
     def __init__(self, plot_title, **kwargs):
-        nn.Module.__init__(self)
         Base.__init__(self, plot_title, 'complex', **kwargs)
         self.channel = \
             mlogger.getEnv().create_channel(str(uuid.uuid4()),
@@ -62,18 +58,18 @@ class Histogram(nn.Module, Base):
                                             **self.channel_config)
         self.multi_channels = [self.channel]
 
-    def forward(self, x):
+    def update(self, x):
         # NCHW
         if x is not None:
-            data = x.cpu().data.numpy()
-            self.update(data)
-        return x
+            data = x.detach().cpu().data.numpy()
+            super(Histogram, self).update(data)
 
     @property
     def value(self):
         return self._val
 
     def _update(self, val):
+        # 基于Batch维度进行展开分析
         if len(val.shape) == 1:
             # 单通道数据
             self.multi_channels[0].update(self.time, val)
@@ -96,18 +92,16 @@ class Histogram(nn.Module, Base):
         self._val = val
 
 
-class Simple(nn.Module, Base):
+class Simple(Base):
     def __init__(self, plot_title, **kwargs):
-        nn.Module.__init__(self)
         Base.__init__(self, plot_title, **kwargs)
         self.chart_x_axis = 'time'
         self.chart_y_axis = ''
 
         self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', **self.channel_config)
 
-    def forward(self, x):
-        self.update(x.item())
-        return x
+    def update(self, x):
+        super(Simple, self).update(x.detach().cpu().item())
 
     @property
     def value(self):
@@ -118,13 +112,12 @@ class Simple(nn.Module, Base):
         self.channel.update(self.time, self.value)
 
 
-class Accumulator_(nn.Module, Base):
+class Accumulator_(Base):
     """
     Credits to the authors of pytorch/tnt for this.
     """
 
     def __init__(self, plot_title, **kwargs):
-        nn.Module.__init__(self)
         Base.__init__(self, plot_title, **kwargs)
         self.chart_x_axis = 'time'
         self.chart_y_axis = ''
@@ -157,8 +150,8 @@ class Accumulator_(nn.Module, Base):
     def value(self):
         raise NotImplementedError("Accumulator should be subclassed")
 
-    def forward(self, x):
-        self.update(x.item())
+    def update(self, x):
+        super(Accumulator_, self).update(x.detach().cpu().item())
         return x
 
 
@@ -183,9 +176,8 @@ class Sum(Accumulator_):
         return self._avg * self._total_weight
 
 
-class Maximum(nn.Module, Base):
+class Maximum(Base):
     def __init__(self, plot_title, **kwargs):
-        nn.Module.__init__(self)
         Base.__init__(self, plot_title, **kwargs)
 
         self.chart_x_axis = 'time'
@@ -218,14 +210,12 @@ class Maximum(nn.Module, Base):
     def value(self):
         return self._val
 
-    def forward(self, x):
-        self.update(x.item())
-        return x
+    def update(self, x):
+        super(Maximum, self).update(x.detach().cpu().item())
 
 
-class Minimum(nn.Module, Base):
+class Minimum(Base):
     def __init__(self, plot_title, **kwargs):
-        nn.Module.__init__(self)
         Base.__init__(self, plot_title, **kwargs)
 
         self.chart_x_axis = 'time'
@@ -258,6 +248,5 @@ class Minimum(nn.Module, Base):
     def value(self):
         return self._val
 
-    def forward(self, x):
-        self.update(x.item())
-        return x
+    def update(self, x):
+        super(Minimum, self).update(x.detach().cpu().item())

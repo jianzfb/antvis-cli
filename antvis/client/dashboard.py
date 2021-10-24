@@ -18,8 +18,8 @@ class Dashboard(object):
                  token=None,
                  experiment_uuid=None,
                  **kwargs):
-        self._dashboard_ip = '121.40.35.60'         # ip
-        self._dashboard_port = 8000                 # port
+        self._dashboard_ip = 'www.mltalker.com'         # ip
+        self._dashboard_port = 80                       # port
         self._dashboard_prefix = 'api/antvis'
         self.launch_time = timestamp()
         self.quiet = False
@@ -216,15 +216,14 @@ class Dashboard(object):
         self.job.update()
     
     def exit(self):
-        # exit dashboard
-        # exit resource
+        # exit global
         self.job.exit()
 
         # stop flag
         self.rpc.experiment.stop.post()
 
     def error(self):
-        # exit resource
+        # exit global
         self.job.exit()
 
         # error flag
