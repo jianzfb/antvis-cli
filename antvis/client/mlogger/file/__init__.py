@@ -226,3 +226,4 @@ class FolderLogger(FileLogger):
 
         # 清空临时压缩包
         os.remove('./'+tar_file_name)
+

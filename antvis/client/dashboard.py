@@ -33,7 +33,7 @@ class Dashboard(object):
         self._stage = ''       # TRAIN, CHALLENGE, EXPERIMENT, ALL
         
         # 信息提交模块
-        self.job = Job(self)
+        self.job = Job(self, cache_max_size=500)
         self.job.start()
 
         # http rpc

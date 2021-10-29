@@ -164,7 +164,7 @@ class Channel(object):
 
       return (data_x, http_prefix+key)
     except:
-      logging.error("Channel Y Must be Numpy Array")
+      logging.error("Fails to upload image")
 
   def transform_to_scatter(self, data):
     data_x, data_y = data

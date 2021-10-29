@@ -27,11 +27,14 @@ class Simple(Base):
     def value(self):
         return self._val
     
-    def _update(self, val):
-        self._val = float(val)
-        self.channel.update(self.time, self.value)
-        
-        
+    def _update(self, y, x=None):
+        self._val = float(y)
+        if x is None:
+            self.channel.update(self.time, self.value)
+        else:
+            self.channel.update((float)(x), self.value)
+
+
 class Accumulator_(Base):
     """
     Credits to the authors of pytorch/tnt for this.

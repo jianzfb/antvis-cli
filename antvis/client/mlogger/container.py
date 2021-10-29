@@ -42,6 +42,8 @@ class Container(object):
         # if item not in self._logger_obj:
         #     return object.__getattribute__(self, item)
         if item not in self._logger_obj:
+            if item not in self.__dict__:
+                return None
             return self.__dict__[item]
 
         return self.__dict__['_logger_obj'][item]
