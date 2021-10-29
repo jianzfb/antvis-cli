@@ -18,24 +18,31 @@ class Visdom(object):
     mlogger.config(env, env, token=token)
     self.container = mlogger.Container()
 
-  def line(self, Y, X=None, win=None, opts=None, update=None, name=None):
+  def line(self, Y, X=None, win=None, env=None, opts=None, update=None, name=None):
+    # 支持list,标量
     assert(win is not None)
     if not getattr(self.container, win):
       if name is None:
         name = win
-      setattr(self.container, win, mlogger.metric.Simple(name))
+      if update:
+        setattr(self.container, win, mlogger.complex.Line(name, is_series=True))
+      else:
+        setattr(self.container, win, mlogger.complex.Line(name, is_series=False))
 
     getattr(self.container, win).update(Y, X)
 
-  def scatter(self, X, Y=None, win=None, env=None, opts=None, update=None, name=None):
+  def scatter(self,Y, X=None, win=None, env=None, opts=None, update=None, name=None):
+    # 支持list, 标量
     assert(win is not None)
-    # if not getattr(self.container, win):
-    #   if name is None:
-    #     name = win
-    #   setattr(self.container, win, mlogger.complex.Scatter(name))
-    #
-    # getattr(self.container, win).update(X)
-    raise NotImplementedError
+    if not getattr(self.container, win):
+      if name is None:
+        name = win
+      if update:
+        setattr(self.container, win, mlogger.complex.Scatter(name, is_series=True))
+      else:
+        setattr(self.container, win, mlogger.complex.Scatter(name, is_series=False))
+
+    getattr(self.container, win).update(Y, X)
 
   def image(self, img, win=None, env=None, opts=None):
     """

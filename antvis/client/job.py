@@ -298,7 +298,7 @@ class Channel(object):
       if not self.time_series:
         data['CHART']['channel_data'] = []
         for x, y in zip(x, y):
-          xxyy = self.transform_to_scatter((x,y))
+          xxyy = self.transform_to_line((x,y))
           if xxyy is None:
             continue
 

@@ -193,31 +193,106 @@ class Table(Base):
 
 
 class Scatter(Base):
-    def __init__(self, plot_title, **kwargs):
+    def __init__(self, plot_title, is_series=True, **kwargs):
         super(Scatter, self).__init__(plot_title, 'complex', **kwargs)
-        self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='SCATTER', time_series=False, **self.channel_config)
+        self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='SCATTER', time_series=is_series, **self.channel_config)
+        self.is_series = is_series
 
     @property
     def value(self):
         return self._val
 
-    def _update(self, val):
-        # val format : [[],[]]
+    def _update(self, val, x=None):
         if type(val) == list:
             val = np.array(val)
 
         if type(val) != np.ndarray:
-            logging.error('Image logger dont support non numpy.ndarray data')
-            raise NotImplementedError
+            # 标量
+            val = np.array([val])
 
-        assert (len(val.shape) == 2)
-        assert (val.shape[0] == 2 or val.shape[1] == 2)
-        if val.shape[0] == 2:
-            val = val.tolist()
+        if len(val.shape) == 2:
+            assert (not self.is_series)
+            # val: 2xN, 第0行标识x的值，第1行标识y的值
+            assert (val.shape[0] == 2 or val.shape[1] == 2)
+            if val.shape[0] == 2:
+                val = val.tolist()
+            else:
+                val = np.transpose(val)
+                val = val.tolist()
+
+            self._val = val
+            x, y = val
+            self.channel.update(x, y)
         else:
-            val = np.transpose(val)
             val = val.tolist()
+            if x is None:
+                assert (len(val) == 1)
+                if self.is_series:
+                    self.channel.update(self.time, val[0])
+                else:
+                    self.channel.update([self.time], val)
+            else:
+                if type(x) != list and type(x) != np.ndarray:
+                    x = [x]
+                elif type(x) == np.ndarray:
+                    assert (x.ndim == 1)
+                    x = x.tolist()
 
-        self._val = val
-        x, y = val
-        self.channel.update(x, y)
+                if self.is_series:
+                    self.channel.update(x[0], val[0])
+                else:
+                    assert (len(val) == len(x))
+                    self.channel.update(x, val)
+
+
+class Line(Base):
+    def __init__(self, plot_title, is_series=True, **kwargs):
+        super(Line, self).__init__(plot_title, 'complex', **kwargs)
+        self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='LINE', time_series=is_series, **self.channel_config)
+        self.is_series = is_series
+
+    @property
+    def value(self):
+        return self._val
+
+    def _update(self, val, x=None):
+        if type(val) == list:
+            val = np.array(val)
+
+        if type(val) != np.ndarray:
+            # 标量
+            val = np.array([val])
+
+        if len(val.shape) == 2:
+            assert(not self.is_series)
+            # val: 2xN, 第0行标识x的值，第1行标识y的值
+            assert (val.shape[0] == 2 or val.shape[1] == 2)
+            if val.shape[0] == 2:
+                val = val.tolist()
+            else:
+                val = np.transpose(val)
+                val = val.tolist()
+
+            self._val = val
+            x, y = val
+            self.channel.update(x, y)
+        else:
+            val = val.tolist()
+            if x is None:
+                assert(len(val) == 1)
+                if self.is_series:
+                    self.channel.update(self.time, val[0])
+                else:
+                    self.channel.update([self.time], val)
+            else:
+                if type(x) != list and type(x) != np.ndarray:
+                    x = [x]
+                elif type(x) == np.ndarray:
+                    assert(x.ndim == 1)
+                    x = x.tolist()
+
+                if self.is_series:
+                    self.channel.update(x[0], val[0])
+                else:
+                    assert(len(val) == len(x))
+                    self.channel.update(x, val)
