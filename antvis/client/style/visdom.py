@@ -55,7 +55,7 @@ class Visdom(object):
     assert(win is not None)
     nchannels = img.shape[0] if img.ndim == 3 else 1
     if nchannels == 1:
-      img = np.square(img)
+      img = np.squeeze(img)
       img = img[np.newaxis, :, :].repeat(3, axis=0)
 
     if 'float' in str(img.dtype):

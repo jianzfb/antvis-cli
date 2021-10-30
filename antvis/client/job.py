@@ -162,7 +162,7 @@ class Channel(object):
         logging.error('Fail to upload.')
         return None
 
-      return (data_x, http_prefix+key)
+      return (data_x, http_prefix+key, {'width': data_y.shape[1], 'height': data_y.shape[0]})
     except:
       logging.error("Fails to upload image")
 
@@ -231,7 +231,7 @@ class Channel(object):
     try:
       data_y = np.array(data_y)
       data_y = data_y.flatten()
-      bins = 10 # default bins
+      bins = 100 # default bins
       if "BINS" in self.params:
         bins = self.params['BINS']
       
@@ -266,8 +266,8 @@ class Channel(object):
       if xxyy is None:
         return
       
-      x,y = xxyy
-      data['CHART']['channel_data'].append({'x': x, 'y': y})
+      x,y,meta = xxyy
+      data['CHART']['channel_data'].append({'x': x, 'y': y, 'meta': meta})
     elif self.channel_type == 'SVG':
       xxyy = self.transform_to_svg((x,y))
       if xxyy is None:
@@ -359,7 +359,7 @@ class Job(threading.Thread):
     self.dashboard_port = self.dashboard.dashboard_port
     self.dashboard_prefix = 'http'
     self.daemon = True
-  
+
   def create_channel(self, channel_name, channel_type, **kwargs):
     return Channel(channel_name, channel_type, self, **kwargs)
 
@@ -403,6 +403,12 @@ class Job(threading.Thread):
       self.cache_data = []
 
   def exit(self):
+    if len(self.cache_data) > 0:
+      # 推送剩余数据
+      self.data_queue.put(self.cache_data)
+      self.cache_data = []
+
+    # 推送结束标记
     self.data_queue.put(ExitSig())
     self.join()
   

@@ -22,7 +22,8 @@ class Image(Base):
     def value(self):
         return self._val
     
-    def _update(self, val):
+    def _update(self, val, x=None):
+        # only support HWC, HW
         if type(val) == list:
             val = np.array(val)
         
@@ -33,9 +34,18 @@ class Image(Base):
         assert(len(val.shape) == 2 or len(val.shape) == 3)
         if len(val.shape) == 3:
             assert(val.shape[2] == 3)
-        
+
+        if 'float' in str(val.dtype):
+            if val.max() <= 1:
+                val = val * 255
+            val = np.uint8(val)
+        assert ('uint8' in str(val.dtype))
+
         self._val = val
-        self.channel.update(self.time, self.value)
+        if x is None:
+            self.channel.update(self.time, self.value)
+        else:
+            self.channel.update((float)(x), self.value)
 
     def _get(self, data):
         for x, y in zip(data['x'], data['y']):
@@ -57,9 +67,12 @@ class Histogram(Base):
     def value(self):
         return self._val
     
-    def _update(self, val):
+    def _update(self, val, x=None):
         self._val = val
-        self.channel.update(self.time, self.value)
+        if x is None:
+            self.channel.update(self.time, self.value)
+        else:
+            self.channel.update((float)(x), self.value)
 
 
 class Bar(Base):
