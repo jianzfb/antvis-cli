@@ -177,3 +177,15 @@ class Tag(object):
 
 
 tag = Tag()
+
+
+class Info(object):
+    def __init__(self):
+        pass
+
+    def __getattr__(self, key):
+        if getEnv().dashboard is not None:
+            return getattr(getEnv().dashboard, key)
+
+
+info = Info()
