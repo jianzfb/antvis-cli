@@ -22,19 +22,19 @@ for index in range(100):
   # writer.flush()
 
 
-# # 测试image
-# data = np.random.random((255,255))
-# data = torch.from_numpy(data)
-# writer.add_image('SHOW', data, dataformats='HW')
-#
-# data = np.random.random((3, 255,255))
-# data = torch.from_numpy(data)
-# writer.add_image('SHOW_A', data, dataformats='CHW')
-#
-# data = np.random.random((255,255, 3))
-# data = torch.from_numpy(data)
-# writer.add_image('SHOW_B', data, dataformats='HWC')
-#
-# # 测试histogram
-# data = np.random.random((355,255))
-# writer.add_histogram('HIS', data, max_bins=1000)
+# 测试image
+data = np.random.random((255,255))
+data = torch.from_numpy(data)
+writer.add_image('SHOW', data, dataformats='HW')
+
+data = np.random.random((3, 255,255))
+data = torch.from_numpy(data)
+writer.add_image('SHOW_A', data, dataformats='CHW')
+
+data = np.random.random((255,255, 3))
+data = torch.from_numpy(data)
+writer.add_image('SHOW_B', data, dataformats='HWC')
+
+# 测试histogram
+data = np.random.random((355,255))
+writer.add_histogram('HIS', data, max_bins=1000)

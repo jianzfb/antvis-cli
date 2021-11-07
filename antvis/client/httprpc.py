@@ -232,35 +232,35 @@ class Resource(object):
 
             try:
                 if action == 'get':
-                    result = requests.get(api_url, kwargs, headers=self._rpc.headers, proxies={'http': None, 'https': None})
+                    result = requests.get(api_url, kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s'%(action, result.status_code, api_url))
                         return {'status': 'ERROR'}
                     response = json.loads(result.content)
                     return response
                 elif action == 'post':
-                    result = requests.post(api_url, kwargs, headers=self._rpc.headers, proxies={'http': None, 'https': None})
+                    result = requests.post(api_url, kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s' % (action, result.status_code, api_url))
                         return {'status': 'ERROR'}
                     response = json.loads(result.content)
                     return response
                 elif action == 'put':
-                    result = requests.put(api_url, kwargs, headers=self._rpc.headers, proxies={'http': None, 'https': None})
+                    result = requests.put(api_url, kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s' % (action, result.status_code, api_url))
                         return {'status': 'ERROR'}
                     response = json.loads(result.content)
                     return response
                 elif action == 'patch':
-                    result = requests.patch(api_url, kwargs, headers=self._rpc.headers, proxies={'http': None, 'https': None})
+                    result = requests.patch(api_url, kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s' % (action, result.status_code, api_url))
                         return {'status': 'ERROR'}
                     response = json.loads(result.content)
                     return response
                 elif action == 'delete':
-                    result = requests.delete(api_url, data=kwargs, headers=self._rpc.headers, proxies={'http': None, 'https': None})
+                    result = requests.delete(api_url, data=kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s' % (action, result.status_code, api_url))
                         return {'status': 'ERROR'}
