@@ -20,7 +20,7 @@ class Dashboard(object):
                  **kwargs):
         self._dashboard_ip = 'www.mltalker.com'         # ip
         self._dashboard_port = 80                       # port
-        self._dashboard_prefix = 'api/antvis'
+        self._dashboard_prefix = 'api/antvis'           # api/
         self.launch_time = timestamp()
         self.quiet = False
         self._project = None
@@ -230,7 +230,7 @@ class Dashboard(object):
         self.rpc.experiment.error.post()
 
     def __getattr__(self, key):
-        if key in ['experiment', 'task', 'apply', 'dataset', 'challenge', 'benchmark']:
+        if key in ['experiment', 'task', 'apply', 'dataset', 'challenge', 'benchmark', 'ensemble']:
             return getattr(self.rpc, key)
         
         return self.__dict__.get(key)

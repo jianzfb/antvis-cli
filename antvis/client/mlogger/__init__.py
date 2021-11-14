@@ -14,6 +14,8 @@ from antvis.client.mlogger.file import *
 from contextlib import contextmanager
 import git
 import logging
+from qiniu import put_data
+from io import BytesIO
 
 
 class __Env(object):
@@ -44,6 +46,7 @@ class __Env(object):
             })
 
         return self.cache_upload_token[mode]
+
 
 __env = None
 
@@ -178,7 +181,7 @@ class Tag(object):
 
 tag = Tag()
 
-
+# 更新任意信息
 class Info(object):
     def __init__(self):
         pass
@@ -189,3 +192,51 @@ class Info(object):
 
 
 info = Info()
+
+# 更新任意文件
+class File(object):
+    def __init__(self):
+        pass
+
+    def upload(self, prefix, name, content, is_file=False):
+        result = getEnv().getUploadToken(prefix)
+        token = result['token']
+        user = result['user']
+
+        key = 'antvis/{}/{}'.format(user, prefix, name)
+        if not is_file:
+            ret, info = put_data(token, key, content)
+        else:
+            file_path = content
+            if not os.path.exists(file_path):
+                logging.error('Fail to upload %s (%s not exist).' % (name, file_path))
+                return
+            ret, info = put_file(token, key, file_path)
+
+        if info.status_code != 200:
+            logging.error('Fail to upload %s.'%name)
+            return False
+
+        return True
+
+    def download(self, prefix, name, user):
+        user = ''
+        key = 'antvis/{}/{}'.format(user, prefix, name)
+        f = BytesIO()
+        try:
+            data_url = 'http://experiment.mltalker.com/'+key
+            r = requests.get(data_url, stream=True)
+            if r.status_code != 200:
+                logging.error('Fetch {} error.'.format(key))
+                return None
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+        except:
+            logging.error('Fetch {} error.'.format(key))
+            return None
+
+        return f.getvalue()
+
+
+file = File()

@@ -231,6 +231,10 @@ class Resource(object):
                 kwargs.update(self._rpc.data)
 
             try:
+                # proxies={
+                #     'http': None,
+                #     'https': None
+                # }
                 if action == 'get':
                     result = requests.get(api_url, kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
