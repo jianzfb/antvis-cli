@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 from antvis.client.dashboard import *
 from antvis.client.mlogger.container import *
+from antvis.client.mlogger.variable import *
 from antvis.client.mlogger.metric import *
 from antvis.client.mlogger.complex import *
 from antvis.client.mlogger.monitor import *
@@ -59,8 +60,9 @@ def getEnv():
 def config(project=None, experiment=None, token=None, **kwargs):
     global __env
     __env = __Env(project, experiment, token, **kwargs)
-    
-    
+    Variable.env = __env
+
+
 def update():
     global __env
     if __env.dashboard is not None:

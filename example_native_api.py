@@ -6,28 +6,29 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 import antvis.client.mlogger as mlogger
+
 import numpy as np
 import time
 
-# project = 'AA'
-# experiment = 'my_exp_3'
-#
-# # 创建实验
-# mlogger.config(project, experiment, token='706cb1895fb84507b6fa4703bfbe3026')
+project = 'AA'
+experiment = 'my_exp_4'
 
-# # 添加实验标签
-# mlogger.tag.learning_rate = '0.01'
-# mlogger.tag.batch_size = '126'
-# mlogger.tag.optimizer = 'TYQ'
-# mlogger.tag.weight_decay = '0.0001'
-# mlogger.tag.alg = 'TVN'
-#
-# xp = mlogger.Container()
-# xp.train = mlogger.Container()
-# xp.train.accuracy = mlogger.metric.Average('accuracy')
-# for j in range(10):
-#   xp.train.accuracy.update(j)
-#
+# 创建实验
+mlogger.config(project, experiment, token='d7030d4a2bc646c29c40bc3b425d1e3f', server="BASELINE")
+
+# 添加实验标签
+mlogger.tag.learning_rate = '0.01'
+mlogger.tag.batch_size = '126'
+mlogger.tag.optimizer = 'TYQ'
+mlogger.tag.weight_decay = '0.0001'
+mlogger.tag.alg = 'TVN'
+
+xp = mlogger.Container()
+xp.train = mlogger.Container()
+xp.train.accuracy = mlogger.metric.Average('accuracy')
+for j in range(10):
+  xp.train.accuracy.update(j)
+
 # xp.test = mlogger.Container()
 # xp.test.show1 = mlogger.complex.Image("S")
 # xp.test.show2 = mlogger.complex.Image("S")
@@ -77,8 +78,14 @@ import time
 #   time.sleep(10)
 
 
-mlogger.config(token='706cb1895fb84507b6fa4703bfbe3026')
-# 获得指定项目下的实验列表
-experiment_list = mlogger.list(project='Hello')
+# mlogger.config(token='706cb1895fb84507b6fa4703bfbe3026')
+# # 获得指定项目下的实验列表
+# experiment_list = mlogger.list(project='Hello')
+#
+# print(experiment_list)
 
-print(experiment_list)
+v = mlogger.Variable()
+v.b = mlogger.FloatVar(1.0)
+
+v.b.set(10.0)
+print(v.b.get())
