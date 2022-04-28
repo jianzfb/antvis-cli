@@ -65,18 +65,24 @@ def config(project=None, experiment=None, token=None, **kwargs):
 
 def update():
     global __env
+    if __env is None:
+        return
     if __env.dashboard is not None:
         __env.dashboard.update()
     
     
 def exit():
     global __env
+    if __env is None:
+        return
     if __env.dashboard is not None:
         __env.dashboard.exit()
 
 
 def error():
     global __env
+    if __env is None:
+        return
     if __env.dashboard is not None:
         __env.dashboard.error()
 
