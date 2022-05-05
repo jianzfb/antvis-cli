@@ -231,10 +231,10 @@ class Channel(object):
     try:
       data_y = np.array(data_y)
       data_y = data_y.flatten()
-      bins = 100 # default bins
-      if "BINS" in self.params:
-        bins = self.params['BINS']
-      
+      bins = 100  # default bins
+      # if "BINS" in self.params:
+      #   bins = self.params['BINS']
+
       data_y = np.histogram(data_y, bins)
     except:
       logging.error("Channel Y Must be Numpy Array")

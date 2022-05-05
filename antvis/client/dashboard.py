@@ -18,9 +18,10 @@ class Dashboard(object):
                  token=None,
                  experiment_uuid=None,
                  **kwargs):
-        self._dashboard_ip = 'www.mltalker.com'         # ip
+        self._dashboard_ip = 'www.mltalker.com'         # ip (www.mltalker.com)
         self._dashboard_port = 80                       # port
-        self._dashboard_prefix = 'api/antvis'           # api/
+        self._dashboard_prefix = 'api/antvis'           # (api/antvis)
+
         self.launch_time = timestamp()
         self.quiet = False
         self._project = None

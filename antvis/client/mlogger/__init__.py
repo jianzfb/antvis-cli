@@ -211,7 +211,7 @@ class File(object):
         token = result['token']
         user = result['user']
 
-        key = 'antvis/{}/{}'.format(user, prefix, name)
+        key = 'antvis/{}/{}/{}'.format(user, prefix, name)
         if not is_file:
             ret, info = put_data(token, key, content)
         else:
@@ -227,13 +227,15 @@ class File(object):
 
         return True
 
-    def download(self, prefix, name, user):
-        user = ''
-        key = 'antvis/{}/{}'.format(user, prefix, name)
+    def download(self, prefix, name, user, url=None):
+        key = '.'.join([k for k in [prefix, name, user] if k is not None])
+        if url is None:
+            url = 'http://experiment.mltalker.com'
+            key = 'antvis/{}/{}/{}'.format(user, prefix, name)
+
         f = BytesIO()
         try:
-            data_url = 'http://experiment.mltalker.com/'+key
-            r = requests.get(data_url, stream=True)
+            r = requests.get(f'{url}/{key}', stream=True)
             if r.status_code != 200:
                 logging.error('Fetch {} error.'.format(key))
                 return None
