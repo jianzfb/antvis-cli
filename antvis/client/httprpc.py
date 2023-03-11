@@ -40,7 +40,7 @@ class Resource(object):
         chunk_size = 1024*1024 # 1M
         chunk_num = (file_size + chunk_size - 1)//chunk_size
         finished_size = 0
-        api_url = '%s/upload/%s/' % (self._rpc.url, self._resource)
+        api_url = '%s/%s/upload/' % (self._rpc.url, self._resource)
         try_times = 3
         fail_blocks = {}
         with open(file_path, 'rb') as fp:
@@ -115,7 +115,7 @@ class Resource(object):
         if self._rpc.data is not None and type(self._rpc.data) == dict:
             kwargs.update(self._rpc.data)
         
-        api_url = '%s/upload/%s/' % (self._rpc.url, self._resource)
+        api_url = '%s/%s/upload/' % (self._rpc.url, self._resource)
 
         result = requests.post(api_url, kwargs, files=files, headers=self._rpc.headers)
         if result.status_code not in [200, 201]:
@@ -187,7 +187,7 @@ class Resource(object):
                 if k not in kwargs:
                     kwargs.update({k: v})
         
-        file_api_url = '%s/download/%s/' % (self._rpc.url, self._resource)
+        file_api_url = '%s/%s/download/' % (self._rpc.url, self._resource)
         is_success = True
         try:
             r = requests.get(file_api_url, kwargs, stream=True, headers=self._rpc.headers)
