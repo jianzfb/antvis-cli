@@ -4,7 +4,7 @@ def readme():
     with open('README.rst') as f:
         return f.read()
 
-setup(name='antvis',
+setup(name='antviscli',
       version='0.1.20',
       description='machine learning manage client',
       __short_description__='machine learning manage client',
