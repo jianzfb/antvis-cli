@@ -15,7 +15,8 @@ project = 'AA'
 experiment = 'my_exp_4'
 
 # 创建实验
-mlogger.config(project, experiment, token='e4d8e05850a04280a55aa012d7f68eba')
+token = '57775dff1ad642b2abe5336ba105dd31'
+mlogger.config(project, experiment, token=token)
 
 v = mlogger.Variable()
 # 测试浮点值
@@ -42,8 +43,3 @@ print(v.e.get())
 # v.m = mlogger.TriggerVar()
 # v.m.waitting()
 # print("hello")
-
-xp = mlogger.Container()
-xp.test = mlogger.Container()
-xp.pareto_front_1 = mlogger.complex.Scatter(plot_title='pareto front 1', is_series=False)
-xp.pareto_front_1.update(np.random.randint(0,10,(2,10)))

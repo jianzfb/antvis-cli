@@ -341,7 +341,7 @@ class HttpRpc(object):
     def url(self):
         request_url = 'http://%s:%d/%s' % (self.ip, self.port, self.prefix)
         return request_url
-        
+
     @property
     def headers(self):
         if self.token is None:

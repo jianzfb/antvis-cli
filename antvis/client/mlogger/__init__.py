@@ -12,6 +12,7 @@ from antvis.client.mlogger.metric import *
 from antvis.client.mlogger.complex import *
 from antvis.client.mlogger.monitor import *
 from antvis.client.mlogger.file import *
+from antvis.client.httprpc import *
 from contextlib import contextmanager
 import git
 import logging
@@ -56,6 +57,12 @@ def getEnv():
     global __env
     return __env
 
+def create_token():
+    rpc = HttpRpc("v1",Dashboard._dashboard_prefix, Dashboard._dashboard_ip, Dashboard._dashboard_port)    
+    response = rpc.cas.fastsignup.post()
+    if response['status'] == 'OK':
+        return response['content']['token']
+    return None
 
 def config(project=None, experiment=None, token=None, **kwargs):
     global __env
@@ -230,7 +237,7 @@ class File(object):
     def download(self, prefix, name, user, url=None):
         key = '.'.join([k for k in [prefix, name, user] if k is not None])
         if url is None:
-            url = 'http://experiment.mltalker.com'
+            url = 'http://file.vibstring.com'
             key = 'antvis/{}/{}/{}'.format(user, prefix, name)
 
         f = BytesIO()

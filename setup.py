@@ -5,12 +5,12 @@ def readme():
         return f.read()
 
 setup(name='antvis',
-      version='0.1.19',
+      version='0.1.20',
       description='machine learning manage client',
       __short_description__='machine learning manage client',
-      url='http://www.mltalker.com',
+      url='http://www.vibstring.com',
       author='jian',
-      author_email='jian@mltalker.com',
+      author_email='jian@vibstring.com',
       packages=find_packages(),
       long_description=readme(),
       include_package_data=True,

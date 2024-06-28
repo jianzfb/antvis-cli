@@ -26,11 +26,11 @@ class Image(Base):
         # only support HWC, HW
         if type(val) == list:
             val = np.array(val)
-        
+
         if type(val) != np.ndarray:
             logging.error('Image logger dont support non numpy.ndarray data')
             raise NotImplementedError
-        
+
         assert(len(val.shape) == 2 or len(val.shape) == 3)
         if len(val.shape) == 3:
             assert(val.shape[2] == 3)
@@ -95,7 +95,7 @@ class Heatmap(Base):
     def __init__(self, plot_title, **kwargs):
         super(Heatmap, self).__init__(plot_title, 'complex', **kwargs)
         
-        self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='HEATMAP', **self.channel_config)
+        self.channel = mlogger.getEnv().create_channel(str(uuid.uuid4()), channel_type='IMAGE', **self.channel_config)
 
     @property
     def value(self):
@@ -111,11 +111,14 @@ class Heatmap(Base):
             
         if self.chart.chart_y_axis == '':
             self.chart.chart_y_axis = ','.join([str(i) for i in range(val.shape[1])])
-        
-        val = val.tolist()
+
+        val = val.astype(np.float32)
+        val = val / np.max(val)
+        val = val * 255
+        val = val.astype(np.uint8)
         self._val = val
         self.channel.update(self.time, self.value)
-        
+
         
 class Svg(Base):
     def __init__(self, plot_title, **kwargs):

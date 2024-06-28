@@ -79,7 +79,7 @@ class Base(object):
             self.chart = Base.charts[group_plot_title]
             self.chart.chart_x_axis = self.chart_x_axis
             self.chart.chart_y_axis = self.chart_y_axis
-        
+
         self.chart.bind_channel(self.channel)
         
     def reset_hooks_on_update(self):

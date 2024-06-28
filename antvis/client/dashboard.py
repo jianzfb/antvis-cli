@@ -14,13 +14,13 @@ import logging
 
 
 class Dashboard(object):
+    _dashboard_ip = 'ai.vibstring.com'                      # ip (www.mltalker.com)
+    _dashboard_port = 9002                                  # port
+    _dashboard_prefix = 'antvis'                            # (api/antvis)
     def __init__(self,
                  token=None,
                  experiment_uuid=None,
                  **kwargs):
-        self._dashboard_ip = 'www.mltalker.com'         # ip (www.mltalker.com)
-        self._dashboard_port = 80                       # port
-        self._dashboard_prefix = 'api/antvis'           # (api/antvis)
 
         self.launch_time = timestamp()
         self.quiet = False
@@ -103,31 +103,31 @@ class Dashboard(object):
     
     @property
     def dashboard_ip(self):
-        return self._dashboard_ip
+        return Dashboard._dashboard_ip
     
     @dashboard_ip.setter
     def dashboard_ip(self, val):
-        self._dashboard_ip = val
+        Dashboard._dashboard_ip = val
         if self.rpc is not None:
             self.rpc.ip = val
     
     @property
     def dashboard_port(self):
-        return self._dashboard_port
+        return Dashboard._dashboard_port
 
     @dashboard_port.setter
     def dashboard_port(self, val):
-        self._dashboard_port = val
+        Dashboard._dashboard_port = val
         if self.rpc is not None:
             self.rpc.port = int(val)
     
     @property
     def dashboard_prefix(self):
-        return self._dashboard_prefix
+        return Dashboard._dashboard_prefix
     
     @dashboard_prefix.setter
     def dashboard_prefix(self, val):
-        self._dashboard_prefix = val
+        Dashboard._dashboard_prefix = val
         if self.rpc is not None:
             self.rpc.prefix = val
     
@@ -211,7 +211,7 @@ class Dashboard(object):
           
         self.project = kwargs.get('project', self.project)
         self.experiment_name = kwargs.get('experiment', self.experiment_name)
-        
+
     def update(self):
         # update dashboard
         self.job.update()
