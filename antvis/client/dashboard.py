@@ -14,25 +14,21 @@ import logging
 
 
 class Dashboard(object):
-    _dashboard_ip = 'ai.vibstring.com'                      # ip (www.mltalker.com)
+    _dashboard_ip = 'experiment.vibstring.com'              # ip (experiment.vibstring.com)
     _dashboard_port = 9002                                  # port
     _dashboard_prefix = 'antvis'                            # (api/antvis)
-    def __init__(self,
-                 token=None,
-                 experiment_uuid=None,
-                 **kwargs):
-
+    def __init__(self, token=None, experiment_uuid=None, **kwargs):
         self.launch_time = timestamp()
         self.quiet = False
         self._project = None
         self._experiment_name = None
-        
+
         self._server = kwargs.get('server', "EXPLORE")
         self._experiment_uuid = None
         self._token = None
         self._hyper_parameter = ''
         self._stage = ''       # TRAIN, CHALLENGE, EXPERIMENT, ALL
-        
+
         # 信息提交模块
         self.job = Job(self, cache_max_size=500)
         self.job.start()
@@ -46,27 +42,27 @@ class Dashboard(object):
             self.token = token                          # 任务token
         if experiment_uuid is not None:
             self.experiment_uuid = experiment_uuid      # 实验uuid
-        
+
     @property
     def project(self):
         return self._project
-    
+
     @project.setter
     def project(self, val):
         self._project = val
-    
+
     @property
     def experiment_name(self):
         return self._experiment_name
-    
+
     @experiment_name.setter
     def experiment_name(self, val):
         self._experiment_name = val
-    
+
     @property
     def server(self):
         return self._server
-    
+
     @server.setter
     def server(self, val):
         self._server = val
@@ -76,41 +72,41 @@ class Dashboard(object):
     @property
     def experiment_uuid(self):
         return self._experiment_uuid
-    
+
     @experiment_uuid.setter
     def experiment_uuid(self, val):
         self._experiment_uuid = val
         if self.rpc is not None:
             self.rpc.data.update({'experiment_uuid': self.experiment_uuid})
-    
+
     @property
     def token(self):
         return self._token
-    
+
     @token.setter
     def token(self, val):
         self._token = val
         if self.rpc is not None:
             self.rpc.token = val
-    
+
     @property
     def experiment_hyper_parameter(self):
         return self._hyper_parameter
-    
+
     @experiment_hyper_parameter.setter
     def experiment_hyper_parameter(self, val):
         self._hyper_parameter = val
-    
+
     @property
     def dashboard_ip(self):
         return Dashboard._dashboard_ip
-    
+
     @dashboard_ip.setter
     def dashboard_ip(self, val):
         Dashboard._dashboard_ip = val
         if self.rpc is not None:
             self.rpc.ip = val
-    
+
     @property
     def dashboard_port(self):
         return Dashboard._dashboard_port
@@ -120,11 +116,11 @@ class Dashboard(object):
         Dashboard._dashboard_port = val
         if self.rpc is not None:
             self.rpc.port = int(val)
-    
+
     @property
     def dashboard_prefix(self):
         return Dashboard._dashboard_prefix
-    
+
     @dashboard_prefix.setter
     def dashboard_prefix(self, val):
         Dashboard._dashboard_prefix = val
