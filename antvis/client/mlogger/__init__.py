@@ -21,10 +21,10 @@ from io import BytesIO
 
 
 class __Env(object):
-    def __init__(self, project=None, experiment=None, token=None, **kwargs):
+    def __init__(self, project=None, experiment=None, token=None, auto_suffix=False,**kwargs):
         self.dashboard = Dashboard(token=token, **kwargs)
         if project is not None and experiment is not None:
-            self.dashboard.create_project(project=project, experiment=experiment)
+            self.dashboard.create_project(project=project, experiment=experiment, auto_suffix=auto_suffix)
 
         self.cache_upload_token = {}
 
@@ -76,8 +76,8 @@ def update():
         return
     if __env.dashboard is not None:
         __env.dashboard.update()
-    
-    
+
+
 def exit():
     global __env
     if __env is None:
@@ -94,10 +94,10 @@ def error():
         __env.dashboard.error()
 
 
-def create_project(project, experiment):
+def create_project(project, experiment, auto_suffix=False):
     # 创建实验
     global __env
-    experiment_uuid = __env.dashboard.create_project(project=project, experiment=experiment)
+    experiment_uuid = __env.dashboard.create_project(project=project, experiment=experiment, auto_suffix=auto_suffix)
     return experiment_uuid
 
 
@@ -116,13 +116,13 @@ def list(project=None):
 
 
 @contextmanager
-def Context(project, experiment, token=None, path='.'):
+def Context(project, experiment, token=None, auto_suffix=False, path='.'):
     # 创建实验基本信息
     global __env
     global tag
     # 配置平台
     assert(project is not None and experiment is not None)
-    config(project, experiment, token)
+    config(project, experiment, token, auto_suffix=auto_suffix)
 
     # 获取git信息
     git_commit = ''

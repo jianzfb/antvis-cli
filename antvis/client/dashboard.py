@@ -148,18 +148,21 @@ class Dashboard(object):
         # 2.step 创建项目(获得 experiment_uuid)
         response = \
             self.rpc.experiment.post(task_name=self.project,
-                                     experiment_name=self.experiment_name)
+                                     experiment_name=self.experiment_name,
+                                     auto_suffix=kwargs.get('auto_suffix', False))
         experiment_uuid = None
         if response['status'] == "OK":
             experiment_uuid = response['content']['experiment_uuid']
             self.experiment_uuid = experiment_uuid
-            
+
+            experiment_name = response['content']['experiment_name']
+            self.experiment_name = experiment_name
+
             self.rpc.data.update({'experiment_uuid': experiment_uuid})
             logging.info('Success to create %s/%s'%(self.project, self.experiment_name))
         else:
             self.experiment_uuid = None
             logging.error('Fail to register experiment in dashboard')
-
 
         return experiment_uuid
 

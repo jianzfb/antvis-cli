@@ -14,6 +14,8 @@ import urllib
 import uuid
 import gzip
 import logging
+# 禁止requests的正常日志
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 
 class Resource(object):
