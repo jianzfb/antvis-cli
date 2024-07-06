@@ -474,7 +474,7 @@ class Job(threading.Thread):
 
       if not self.is_parameter_send:
         experiment_data.update({
-          'experiment_hyper_parameter': self.dashboard.experiment_hyper_parameter
+          'experiment_hyper_parameter': self.dashboard.experiment_hyper_parameter if isinstance(self.dashboard.experiment_hyper_parameter, str) else json.dumps(self.dashboard.experiment_hyper_parameter)
         })
         self.is_parameter_send = True
 
