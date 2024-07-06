@@ -13,27 +13,66 @@ import uuid
 import sys
 from antvis.client.mlogger.metric.base import *
 import logging
+# 七牛云接口
 from qiniu import Auth, put_file, etag
 import qiniu.config
+# 阿里云盘接口
+from aligo import Aligo
 import requests
 import zlib
 
 
+# aliyun:   使用个人存储空间
+# qiniu:    使用平台空间
+# dist:     本地
 class FileLogger(object):
-    def __init__(self, title):
-        self.group_name = ''
-        self.tag = ''
+    root_folder = '/antvis'
+    def __init__(self, title, backend='aliyun', only_record=False):
         self.title = title
         assert title != ''
+
+        self.is_ready = False
+        # backend storage
+        self.backend = backend
+        if self.backend not in ['aliyun', 'qiniu', 'disk']:
+            logging.error('FileLogger only support (aliyun,qiniu,dist) backend')
+            return
+
+        self.ali = None
+        self.only_record = only_record
+        if not self.only_record and self.backend == 'aliyun':
+            self.ali = Aligo()
 
         # experiment config
         self.project = mlogger.getEnv().dashboard.project
         self.experiment_name = mlogger.getEnv().dashboard.experiment_name
         self.experiment_uuid = mlogger.getEnv().dashboard.experiment_uuid
-        self.folder = ''
 
-        if self.experiment_uuid is None:
-            return
+        self.is_ready = True
+
+    def ali_mkdir(self, remote_path, p=False):
+        # remote prefix
+        remote_path = remote_path.replace('ali://', '')
+        remote_path = os.path.normpath(remote_path)
+        # 迭代创建目录
+        levels = remote_path.split('/')[1:]
+        level_num = len(levels)
+        find_file = None
+        find_i = level_num
+        for i in range(level_num,-1,-1):
+            check_path = '/'+'/'.join(levels[:i])            
+            find_file = self.ali.get_folder_by_path(check_path)
+            if find_file:
+                break
+            find_i = i - 1
+
+        if find_i == level_num:
+            # 已经存在，不进行重新创建
+            return find_file.file_id
+
+        sub_folder = '/'.join(levels[find_i:])
+        ss = self.ali.create_folder(sub_folder,find_file.file_id)
+        return ss.file_id
 
     @property
     def name(self):
@@ -41,19 +80,22 @@ class FileLogger(object):
 
     @name.setter
     def name(self, val):
-        group_name = ''
-        self.tag = val
-        if '/' in val:
-            group_name, self.tag = val.split('/')
-        self.group_name = group_name
+        pass
 
     def update(self, *args, **kwargs):
         if len(args) == 0:
             return
+        if not self.is_ready:
+            return
+        if self.experiment_name is None or self.experiment_name == '':
+            return
+        if self.experiment_uuid is None or self.experiment_uuid == '':
+            return
 
-        local_file_path = os.path.normpath(args[0])
+        local_file_path = os.path.normpath(args[0])        
         if not os.path.exists(local_file_path):
             return
+
         # 扩展名
         ext_name = local_file_path.split('.')[-1]
         # 文件名
@@ -63,6 +105,59 @@ class FileLogger(object):
         fsize = os.path.getsize(local_file_path)
         fsize = fsize / float(1024 * 1024)
         fsize = round(fsize, 2)
+
+        if self.backend == 'aliyun':
+            # 上传到阿里云盘并在平台记录
+            remote_folder = 'ali://'
+            if FileLogger.root_folder != '':
+                remote_folder = FileLogger.root_folder
+            remote_folder = remote_folder.replace('ali://', '')
+            if remote_folder.endswith('/'):
+                remote_folder = remote_folder[:-1]
+            if not self.only_record:
+                # 上传
+                file_id = self.ali_mkdir(remote_folder, True)
+                self.ali.upload_file(local_file_path, file_id)
+
+            # 记录
+            mlogger.getEnv().dashboard.experiment.patch(**{
+                'experiment_name': self.experiment_name,
+                'experiment_uuid': self.experiment_uuid,
+                'experiment_stage': mlogger.getEnv().dashboard.experiment_stage,
+                'experiment_data': zlib.compress(json.dumps(
+                    {
+                        'FILE_ABSTRACT': {
+                            'title': self.title,
+                            'backend': self.backend,
+                            'path': f'{remote_folder}/{file_name}',
+                            'size': fsize,
+                        },
+                        'APP_STAGE': mlogger.getEnv().dashboard.experiment_stage
+                    }
+                ).encode())
+            })
+            return
+
+        if self.backend == 'disk':
+            # 仅在平台记录
+            # 记录
+            mlogger.getEnv().dashboard.experiment.patch(**{
+                'experiment_name': self.experiment_name,
+                'experiment_uuid': self.experiment_uuid,
+                'experiment_stage': mlogger.getEnv().dashboard.experiment_stage,
+                'experiment_data': zlib.compress(json.dumps(
+                    {
+                        'FILE_ABSTRACT': {
+                            'title': self.title,
+                            'backend': 'disk',
+                            'path': local_file_path,
+                            'size': fsize,
+                        }, 
+                        'APP_STAGE': mlogger.getEnv().dashboard.experiment_stage
+                    }
+                ).encode())
+            })
+            return
 
         # 腾讯COS
         # # 1.step 获得临时秘钥
@@ -108,11 +203,9 @@ class FileLogger(object):
             return None
         token = info['token']
         user = info['user']
-
-        tag_str = self.tag if self.group_name == '' else '%s/%s' % (self.group_name, self.tag)
-        key = 'antvis/{}/{}/{}/{}/{}'.format(user, self.experiment_uuid, tag_str, self.title, file_name)
-        ret, info = put_file(token, key, local_file_path, version='v2')
-
+        
+        remote_path = 'antvis/{}/{}/{}'.format(self.experiment_uuid, self.title, file_name)
+        ret, info = put_file(token, remote_path, local_file_path, version='v2')
         if info.status_code != 200:
             logging.error('Fail to upload.')
             return
@@ -122,13 +215,17 @@ class FileLogger(object):
             'experiment_name': self.experiment_name,
             'experiment_uuid': self.experiment_uuid,
             'experiment_stage': mlogger.getEnv().dashboard.experiment_stage,
-            'experiment_data': zlib.compress(json.dumps({'FILE_ABSTRACT': {
-                'group': tag_str,
-                'title': self.title,
-                'backend': 'QINIU',
-                'path': key,
-                'size': fsize,
-            }, 'APP_STAGE': mlogger.getEnv().dashboard.experiment_stage}).encode())
+            'experiment_data': zlib.compress(json.dumps(
+                {
+                    'FILE_ABSTRACT': {
+                        'title': self.title,
+                        'backend': 'qiniu',
+                        'path': remote_path,
+                        'size': fsize,
+                    }, 
+                    'APP_STAGE': mlogger.getEnv().dashboard.experiment_stage
+                }
+            ).encode())
         })
 
     def config(self, **kwargs):
@@ -136,73 +233,60 @@ class FileLogger(object):
 
     def get(self):
         # 文件下载
-        # 1.step 获取日志文件
-        tag_str = self.tag if self.group_name == '' else '%s/%s' % (self.group_name, self.tag)
-        # response = \
-        #     mlogger.getEnv().dashboard.\
-        #         rpc.experiment.file.get(experiment_uuid=self.experiment_uuid,
-        #                                 key='{}/{}'.format(tag_str, self.title))
-        # if response['status'] == 'ERROR':
-        #   logging.error('couldnt get log file path')
-        #   return
-        #
-        # log_file = response['content']['path']
-        # log_name = log_file.split('/')[-1]
-        # tmpSecretId = response['content']['tmpSecretId']
-        # tmpSecretKey = response['content']['tmpSecretKey']
-        # sessionToken = response['content']['sessionToken']
-        # region = response['content']['region']
-        # bucket = response['content']['bucket']
-        #
-        # # 2.step 下载日志文件
-        # try:
-        #   config = CosConfig(Region=region,
-        #                      SecretId=tmpSecretId,
-        #                      SecretKey=tmpSecretKey,
-        #                      Token=sessionToken,
-        #                      Scheme='https')
-        #   client = CosS3Client(config)
-        #   response = client.get_object(Bucket=bucket, Key=log_file)
-        #   file_content = response['Body'].get_raw_stream()
-        #   with open('./{}'.format(log_name), 'wb') as fp:
-        #     fp.write(file_content.read())
-        # except:
-        #   logging.error('download {} error'.format(log_file))
+        if not self.is_ready:
+            return None
 
-        # 七牛COS
-        # 1.step 获得临时秘钥
-        response = \
-          mlogger.getEnv().dashboard.rpc.cos.experiment.get(cos='QINIU',
-                                                            mode='log/file',
-                                                            operator='download',
-                                                            key='antvis/{}/'+'{}/{}/{}'.format(self.experiment_uuid, tag_str, self.title))
+        response = mlogger.getEnv().dashboard.rpc.experiment.file.get(
+            experiment_uuid=self.experiment_uuid,
+            title=self.title,
+        )
         if response['status'] == 'ERROR':
-          logging.error('Could get cos token.')
-          return
+            logging.error('Couldnt get record info.')
+            return None
 
-        response = response['content']
-        file_url = response['file_url']
-        file_name = response['file_name']
+        record_info = response['content']
+        remote_file_list = record_info['files']
+        local_file_list = []
+        for file_info in remote_file_list:
+            file_backend = file_info['backend']
+            file_path = file_info['path']
+            file_url = file_info['url']
+            file_name = file_path.split('/')[-1]
+            if file_backend == 'aliyun':
+                file_path = file_path.replace('ali://', '')
+                file = self.ali.get_file_by_path(file_path)
+                if file is None:
+                    logging.error(f'Remote file path {file_path} not exist')
+                    return None
 
-        try:
-            r = requests.get(file_url, stream=True)
-            with open('./{}'.format(file_name), "wb") as pdf:
-                for chunk in r.iter_content(chunk_size=1024):
-                    if chunk:
-                        pdf.write(chunk)
-        except:
-            logging.error('Download {} error.'.format(file_name))
+                self.ali.download_file(file=file, local_folder='./')
+                local_file_list.append(file_name)
+
+            if file_backend == 'disk':
+                local_file_list.append(file_path)
+
+            if file_backend == 'qiniu':
+                try:
+                    r = requests.get(file_url, stream=True)
+                    with open('./{}'.format(file_name), "wb") as pdf:
+                        for chunk in r.iter_content(chunk_size=1024):
+                            if chunk:
+                                pdf.write(chunk)
+                    local_file_list.append(file_name)
+                except:
+                    logging.error('Download {} error.'.format(file_name))                
+
+        return local_file_list
 
 
 class FolderLogger(FileLogger):
-    def __init__(self, title):
-        super(FolderLogger, self).__init__(title)
-        self.group_name = ''
-        self.file_title = title
-        assert title != ''
+    def __init__(self, title, backend='aliyun', only_record=False):
+        super(FolderLogger, self).__init__(title, backend, only_record)
 
     def update(self, *args, **kwargs):
         if len(args) == 0:
+            return
+        if not self.is_ready:
             return
 
         local_folder_path = args[0]
@@ -213,7 +297,7 @@ class FolderLogger(FileLogger):
             return
 
         # 压缩打包
-        tar_file_name = '%s.tar.gz' % (self.file_title)
+        tar_file_name = '%s.tar.gz' % (self.title)
         tar = tarfile.open('./'+tar_file_name, 'w:gz')
         for root, dirs, files in os.walk(local_folder_path):
             rel_root = os.path.relpath(root, local_folder_path)

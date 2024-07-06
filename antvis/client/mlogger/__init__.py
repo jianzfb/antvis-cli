@@ -37,7 +37,7 @@ class __Env(object):
     def getUploadToken(self, mode):
         if mode not in self.cache_upload_token or (time.time() - self.cache_upload_token[mode]['time']) > self.cache_upload_token[mode]['expire']:
             response = \
-                self.dashboard.rpc.cos.experiment.get(cos='QINIU', mode=mode, operator='upload')
+                self.dashboard.rpc.cos.experiment.get(cos='qiniu', mode=mode, operator='upload')
             if response['status'] == 'ERROR':
                 logging.error('Could get cos token (maybe exceed your storage limit).')
                 return None

@@ -359,6 +359,7 @@ class Job(threading.Thread):
     self.dashboard_port = self.dashboard.dashboard_port
     self.dashboard_prefix = 'http'
     self.daemon = True
+    self.is_parameter_send = False
 
   def create_channel(self, channel_name, channel_type, **kwargs):
     return Channel(channel_name, channel_type, self, **kwargs)
@@ -376,7 +377,7 @@ class Job(threading.Thread):
 
       chart.bind_channel(cc)
     return chart
-  
+
   def cache(self, data):
     if self.dashboard.experiment_name is not None:
       # fill context data
@@ -385,18 +386,16 @@ class Job(threading.Thread):
                       'APP_SERVER': self.dashboard.server,
                       'APP_EXPERIMENT_NAME': self.dashboard.experiment_name,
                       'APP_EXPERIMENT_UUID': self.dashboard.experiment_uuid,
-                      'APP_HYPER_PARAMETER': self.dashboard.experiment_hyper_parameter,
                       'APP_STAGE': self.dashboard.experiment_stage}
-  
       data.update(context_data)
-      
+
       # cache data
       self.cache_data.append(data)
-      
+
       # auto triger update data
       if len(self.cache_data) > self.cache_max_size:
         self.update()
-  
+
   def update(self):
     if len(self.cache_data) > 0:
       self.data_queue.put(self.cache_data)
@@ -466,11 +465,18 @@ class Job(threading.Thread):
 
       # 4.step remote call
       experiment_data = \
-        {'experiment_name': self.dashboard.experiment_name,
-         'experiment_uuid': self.dashboard.experiment_uuid,
-         'experiment_data': zlib.compress(json.dumps(data_package).encode()),
-         'experiment_stage': data[0]['APP_STAGE'],
-         'experiment_hyper_parameter': data[0]['APP_HYPER_PARAMETER']}
+        {
+          'experiment_name': self.dashboard.experiment_name,
+          'experiment_uuid': self.dashboard.experiment_uuid,
+          'experiment_data': zlib.compress(json.dumps(data_package).encode()),
+          'experiment_stage': data[0]['APP_STAGE']
+        }
+
+      if not self.is_parameter_send:
+        experiment_data.update({
+          'experiment_hyper_parameter': self.dashboard.experiment_hyper_parameter
+        })
+        self.is_parameter_send = True
 
       if self.dashboard != None:
         self.dashboard.rpc.experiment.patch(**experiment_data)

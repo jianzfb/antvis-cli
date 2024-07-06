@@ -4,3 +4,4 @@ Pillow
 psutil
 GitPython
 qiniu
+aligo
