@@ -69,6 +69,14 @@ def config(project=None, experiment=None, token=None, **kwargs):
     __env = __Env(project, experiment, token, **kwargs)
     Variable.env = __env
 
+def is_ready():
+    global __env
+    if __env is None:
+        return False
+    
+    if __env.dashboard.experiment_uuid is None:
+        return False
+    return True
 
 def update():
     global __env
