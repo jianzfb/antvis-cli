@@ -15,7 +15,7 @@ import logging
 
 class Dashboard(object):
     _dashboard_ip = 'experiment.vibstring.com'              # ip (experiment.vibstring.com)
-    _dashboard_port = 9002                                  # port
+    _dashboard_port = 80                                    # port(9002)
     _dashboard_prefix = 'antvis'                            # (api/antvis)
     def __init__(self, token=None, experiment_uuid=None, **kwargs):
         self.launch_time = timestamp()
