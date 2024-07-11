@@ -27,6 +27,7 @@ import zlib
 # dist:     本地
 class FileLogger(object):
     root_folder = '/antvis'
+    cache_folder = './logger/cache'
     def __init__(self, title, backend='aliyun', only_record=False):
         self.title = title
         assert title != ''
@@ -231,10 +232,12 @@ class FileLogger(object):
     def config(self, **kwargs):
         pass
 
-    def get(self):
+    def get(self, filter_key=None):
         # 文件下载
         if not self.is_ready:
             return None
+        
+        os.makedirs(FileLogger.cache_folder, exist_ok=True)
 
         response = mlogger.getEnv().dashboard.rpc.experiment.file.get(
             experiment_uuid=self.experiment_uuid,
@@ -252,6 +255,15 @@ class FileLogger(object):
             file_path = file_info['path']
             file_url = file_info['url']
             file_name = file_path.split('/')[-1]
+
+            if filter_key is not None:
+                if file_name != filter_key:
+                    continue
+            
+            if os.path.exists(os.path.join(FileLogger.cache_folder, file_name)):
+                local_file_list.append(os.path.join(FileLogger.cache_folder, file_name))
+                continue
+
             if file_backend == 'aliyun':
                 file_path = file_path.replace('ali://', '')
                 file = self.ali.get_file_by_path(file_path)
@@ -259,8 +271,8 @@ class FileLogger(object):
                     logging.error(f'Remote file path {file_path} not exist')
                     return None
 
-                self.ali.download_file(file=file, local_folder='./')
-                local_file_list.append(file_name)
+                self.ali.download_file(file=file, local_folder=FileLogger.cache_folder)
+                local_file_list.append(os.path.join(FileLogger.cache_folder, file_name))
 
             if file_backend == 'disk':
                 local_file_list.append(file_path)
@@ -268,11 +280,11 @@ class FileLogger(object):
             if file_backend == 'qiniu':
                 try:
                     r = requests.get(file_url, stream=True)
-                    with open('./{}'.format(file_name), "wb") as pdf:
+                    with open(os.path.join(FileLogger.cache_folder, file_name), "wb") as pdf:
                         for chunk in r.iter_content(chunk_size=1024):
                             if chunk:
                                 pdf.write(chunk)
-                    local_file_list.append(file_name)
+                    local_file_list.append(os.path.join(FileLogger.cache_folder, file_name))
                 except:
                     logging.error('Download {} error.'.format(file_name))                
 
