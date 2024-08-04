@@ -10,6 +10,7 @@ import atexit
 import sys
 from . import mlogger
 import logging
+import signal
 __exit_flag = False
 
 
@@ -56,3 +57,5 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 sys.excepthook = handle_exception
 atexit.register(handle_exit)
+signal.signal(signal.SIGTERM, handle_exception)
+signal.signal(signal.SIGINT, handle_exception)
