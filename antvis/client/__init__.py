@@ -11,6 +11,7 @@ import sys
 from . import mlogger
 import logging
 import signal
+import traceback
 __exit_flag = False
 
 
@@ -40,6 +41,9 @@ def handle_exit():
 def handle_exception(exc_type, exc_value, exc_traceback):
   global __exit_flag
   __exit_flag = True
+  # print error info
+  traceback.print_exception(exc_type, exc_value, exc_traceback)
+
   if mlogger.getEnv() is None or mlogger.getEnv().dashboard is None:
     return
 
@@ -49,8 +53,6 @@ def handle_exception(exc_type, exc_value, exc_traceback):
   if project is not None and experiment is not None:
     # error
     mlogger.error()
-    # print error info
-    print(exc_traceback)
     # print log
     logging.error('Error {}/{} experiment logger'.format(project, experiment))
 
