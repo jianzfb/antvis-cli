@@ -41,7 +41,7 @@ class FileLogger(object):
 
         self.ali = None
         self.only_record = only_record
-        if not self.only_record and self.backend == 'aliyun':
+        if self.backend == 'aliyun':
             self.ali = Aligo()
 
         # experiment config
@@ -261,7 +261,7 @@ class FileLogger(object):
             if filter_key is not None:
                 if file_name != filter_key:
                     continue
-            
+
             if os.path.exists(os.path.join(FileLogger.cache_folder, file_name)):
                 local_file_list.append(os.path.join(FileLogger.cache_folder, file_name))
                 continue
