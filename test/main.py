@@ -8,20 +8,46 @@ from __future__ import print_function
 import time
 import numpy as np
 import json
+import sys
+sys.path.insert(0, '/workspace/project/antvis-cli')
 import antvis.client.mlogger as mlogger
-# import tensorflow as tf
-# import antvis.client.mlogger.tensorflow
-# import io
-# import matplotlib.pyplot as plt
-# import os
-# import re
-# import torch
 
-mlogger.config('127.0.0.1', 8999, token='42fb617800384df983edbd9509c2b2ba')
-mlogger.activate('XX', 'exp.3')
+
+project = 'humantracking'
+experiment = 'solidball-sport-udm8'
+
+
+# # 创建token
+# token = mlogger.create_token()
+# print(token)
+
+# 创建实验
+token = '247ac6502f714dc4a3c415fa3af00023'
+mlogger.config(project, experiment, token=token, auto_suffix=False, server="BASELINE")
 xp = mlogger.Container()
-xp.ff = mlogger.FileLogger('model file')
-xp.ff.get()
+# mlogger.FileLogger.root_folder = 'ali:///MM'
+# xp.ff = mlogger.FileLogger('model')
+# xp.ff.update('/workspace/gg.py')
+info = {
+    'a': 159,
+    'b': 30,
+    'c': [11,22,33]
+}
+mlogger.getEnv().dashboard.experiment_hyper_parameter = info
+xp.train = mlogger.Container()
+xp.train.accuracy = mlogger.metric.Average('accuracy')
+for j in range(10):
+  xp.train.accuracy.update(j)
+mlogger.update()
+
+# result = xp.ff.get()
+# print(result)
+
+# mlogger.config('127.0.0.1', 8999, token='42fb617800384df983edbd9509c2b2ba')
+# mlogger.activate('XX', 'exp.3')
+# xp = mlogger.Container()
+# xp.ff = mlogger.FileLogger('model file')
+# xp.ff.get()
 
 
 # mlogger.config('127.0.0.1', 8999, 'XX', 'exp', token='42fb617800384df983edbd9509c2b2ba')

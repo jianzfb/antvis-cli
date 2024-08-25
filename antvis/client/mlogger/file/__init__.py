@@ -115,9 +115,10 @@ class FileLogger(object):
             remote_folder = remote_folder.replace('ali://', '')
             if remote_folder.endswith('/'):
                 remote_folder = remote_folder[:-1]
+
+            file_id = self.ali_mkdir(remote_folder, True)
             if not self.only_record:
                 # 上传
-                file_id = self.ali_mkdir(remote_folder, True)
                 self.ali.upload_file(local_file_path, file_id)
 
             # 记录
@@ -132,6 +133,7 @@ class FileLogger(object):
                             'backend': self.backend,
                             'path': f'{remote_folder}/{file_name}',
                             'size': fsize,
+                            'group': f'{file_id}'
                         },
                         'APP_STAGE': mlogger.getEnv().dashboard.experiment_stage
                     }

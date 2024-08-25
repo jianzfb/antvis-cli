@@ -10,8 +10,8 @@ import antvis.client.mlogger as mlogger
 import numpy as np
 import time
 
-project = 'BB'
-experiment = 'my_exp_4'
+project = 'humantracking'
+experiment = 'solidball-sport-udm8'
 
 
 # # 创建token
@@ -19,12 +19,13 @@ experiment = 'my_exp_4'
 # print(token)
 
 # 创建实验
-token = '560b25852e4248d495979e0f4f9f74b2'
-mlogger.config(project, experiment, token=token, server="BASELINE")
+token = '247ac6502f714dc4a3c415fa3af00023'
+mlogger.config(project, experiment, token=token, auto_suffix=True, server="BASELINE")
 
+print('hello')
 # # 添加实验标签
-# mlogger.tag.learning_rate = '0.01'
-# mlogger.tag.batch_size = '126'
+mlogger.tag.learning_rate = '0.01'
+mlogger.tag.batch_size = '126'
 # mlogger.tag.optimizer = 'TYQ'
 # mlogger.tag.weight_decay = '0.0001'
 # mlogger.tag.alg = 'HELLO'
@@ -65,9 +66,12 @@ xp = mlogger.Container()
 #   time.sleep(10)
 
 xp.pareto_front_1 = mlogger.complex.Scatter(plot_title='pareto front 1', is_series=False)
-xp.pareto_front_1.update(
-    np.random.randint(0,10,(2,10))
-)
+
+for _ in range(100):
+    xp.pareto_front_1.update(
+        np.random.randint(0,10,(2,10))
+    )
+    time.sleep(1)
 # # xp.pareto_front_2 = mlogger.complex.Scatter(plot_title='pareto front 2', is_series=False)
 # # xp.pareto_front_2.update(
 # #     np.random.randint(0,10,[10]).tolist(), np.random.randint(0,10,[10]).tolist()
