@@ -12,7 +12,6 @@ from . import mlogger
 import logging
 import signal
 import traceback
-__exit_flag = False
 
 
 def handle_exit():

@@ -250,9 +250,10 @@ class FileLogger(object):
             return None
 
         record_info = response['content']
-        remote_file_list = record_info['files']
+        remote_info_list = record_info['files']
         local_file_list = []
-        for file_info in remote_file_list:
+        remote_file_list = []
+        for file_info in remote_info_list:
             file_backend = file_info['backend']
             file_path = file_info['path']
             file_url = file_info['url']
@@ -264,6 +265,12 @@ class FileLogger(object):
 
             if os.path.exists(os.path.join(FileLogger.cache_folder, file_name)):
                 local_file_list.append(os.path.join(FileLogger.cache_folder, file_name))
+                if file_backend == 'aliyun':
+                    remote_file_list.append(file_path.replace('ali://', ''))
+                elif file_backend == 'qiniu':
+                    remote_file_list.append(file_url)
+                else:
+                    remote_file_list.append(file_path)
                 continue
 
             if file_backend == 'aliyun':
@@ -275,9 +282,11 @@ class FileLogger(object):
 
                 self.ali.download_file(file=file, local_folder=FileLogger.cache_folder)
                 local_file_list.append(os.path.join(FileLogger.cache_folder, file_name))
+                remote_file_list.append(file_path)
 
             if file_backend == 'disk':
                 local_file_list.append(file_path)
+                remote_file_list.append(file_path)
 
             if file_backend == 'qiniu':
                 try:
@@ -287,10 +296,11 @@ class FileLogger(object):
                             if chunk:
                                 pdf.write(chunk)
                     local_file_list.append(os.path.join(FileLogger.cache_folder, file_name))
+                    remote_file_list.append(file_url)
                 except:
                     logging.error('Download {} error.'.format(file_name))                
 
-        return local_file_list
+        return local_file_list, remote_file_list
 
 
 class FolderLogger(FileLogger):
