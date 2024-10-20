@@ -262,6 +262,7 @@ class FileLogger(object):
         project_name = record_info.get('project_name', None)
         if project_name is not None:
             project_name = project_name.split('.')[-1]
+
         local_file_list = []
         remote_file_list = []
         for file_info in remote_info_list:
@@ -299,9 +300,13 @@ class FileLogger(object):
                 remote_file_list.append(file_path)
 
             if file_backend == 'disk':
-                remote_address, remote_path = file_path.split('?')
+                remote_address, remote_path = '', file_path
+                if "?" in file_path:
+                    remote_address, remote_path = file_path.split('?')
+
                 create_time = remote_path.split('/')[2]
                 if '@' not in remote_address:
+                    # only for test
                     remote_address = 'beta@222.74.153.69'
                 os.system(f'scp {remote_address}:~/{create_time}/{project_name}/{remote_path} {FileLogger.cache_folder}')
                 file_name = remote_path.split('/')[-1]

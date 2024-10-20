@@ -176,7 +176,7 @@ class Dashboard(object):
         if response['status'] == 'OK':
             self.experiment_uuid = response['content']['experiment_uuid']
             self.experiment_name = experiment
-            self.project = project
+            self.project = response['content']['project_name']
             logging.info('Activate experiment %s/%s'%(response['content']['project_name'], response['content']['experiment_name']))
             # 更新rpc的实验标识字段
             self.rpc.data.update({'experiment_uuid': self.experiment_uuid})
