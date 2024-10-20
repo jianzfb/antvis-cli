@@ -307,7 +307,7 @@ class FileLogger(object):
                 create_time = remote_path.split('/')[2]
                 if '@' not in remote_address:
                     # only for test
-                    remote_address = 'beta@222.74.153.69'
+                    remote_address = input("please remote address (user@ip):\n")
                 os.system(f'scp {remote_address}:~/{create_time}/{project_name}/{remote_path} {FileLogger.cache_folder}')
                 file_name = remote_path.split('/')[-1]
                 local_path = f'{FileLogger.cache_folder}/{file_name}'
