@@ -1,3 +1,4 @@
+
 # -*- coding: UTF-8 -*-
 # @Time    : 2020/7/23 7:33 下午
 # @File    : __init__.py.py
@@ -35,13 +36,13 @@ class FileLogger(object):
         self.is_ready = False
         # backend storage
         self.backend = backend
-        if self.backend not in ['aliyun', 'qiniu', 'disk']:
-            logging.error('FileLogger only support (aliyun,qiniu,dist) backend')
+        if self.backend is not None and self.backend not in ['aliyun', 'qiniu', 'disk', 'hdfs']:
+            logging.error('FileLogger only support (aliyun,qiniu,disk,hdfs) backend')
             return
 
         self.ali = None
         self.only_record = only_record
-        if self.backend == 'aliyun':
+        if self.backend is not None and self.backend == 'aliyun':
             self.ali = Aligo()
 
         # experiment config
@@ -116,6 +117,9 @@ class FileLogger(object):
             if remote_folder.endswith('/'):
                 remote_folder = remote_folder[:-1]
 
+            if self.ali is None:
+                self.ali = Aligo()
+
             file_id = self.ali_mkdir(remote_folder, True)
             if not self.only_record:
                 # 上传
@@ -142,7 +146,11 @@ class FileLogger(object):
             return
 
         if self.backend == 'disk':
-            # 仅在平台记录
+            if not self.only_record:
+                # do nothing
+                pass
+
+            disk_address = kwargs.get('address', 'unkown')
             # 记录
             mlogger.getEnv().dashboard.experiment.patch(**{
                 'experiment_name': self.experiment_name,
@@ -152,8 +160,8 @@ class FileLogger(object):
                     {
                         'FILE_ABSTRACT': {
                             'title': self.title,
-                            'backend': 'disk',
-                            'path': local_file_path,
+                            'backend': f'disk',
+                            'path': f'{disk_address}?{local_file_path}',
                             'size': fsize,
                         }, 
                         'APP_STAGE': mlogger.getEnv().dashboard.experiment_stage
@@ -238,7 +246,7 @@ class FileLogger(object):
         # 文件下载
         if not self.is_ready:
             return None
-        
+
         os.makedirs(FileLogger.cache_folder, exist_ok=True)
 
         response = mlogger.getEnv().dashboard.rpc.experiment.file.get(
@@ -251,6 +259,9 @@ class FileLogger(object):
 
         record_info = response['content']
         remote_info_list = record_info['files']
+        project_name = record_info.get('project_name', None)
+        if project_name is not None:
+            project_name = project_name.split('.')[-1]
         local_file_list = []
         remote_file_list = []
         for file_info in remote_info_list:
@@ -274,6 +285,9 @@ class FileLogger(object):
                 continue
 
             if file_backend == 'aliyun':
+                if self.ali is None:
+                    self.ali = Aligo()
+
                 file_path = file_path.replace('ali://', '')
                 file = self.ali.get_file_by_path(file_path)
                 if file is None:
@@ -285,8 +299,15 @@ class FileLogger(object):
                 remote_file_list.append(file_path)
 
             if file_backend == 'disk':
+                remote_address, remote_path = file_path.split('?')
+                create_time = remote_path.split('/')[2]
+                if '@' not in remote_address:
+                    remote_address = 'beta@222.74.153.69'
+                os.system(f'scp {remote_address}:~/{create_time}/{project_name}/{remote_path} {FileLogger.cache_folder}')
+                file_name = remote_path.split('/')[-1]
+                local_path = f'{FileLogger.cache_folder}/{file_name}'
                 local_file_list.append(file_path)
-                remote_file_list.append(file_path)
+                remote_file_list.append(remote_path)
 
             if file_backend == 'qiniu':
                 try:
