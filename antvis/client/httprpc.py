@@ -14,6 +14,7 @@ import urllib
 import uuid
 import gzip
 import logging
+import io
 # 禁止requests的正常日志
 logging.getLogger("requests").setLevel(logging.WARNING)
 
@@ -84,7 +85,7 @@ class Resource(object):
             response = self.slicing_upload(tag, **kwargs)
             return response
 
-        files = {}
+        out = []
         for k, v in kwargs.items():
             if os.path.isdir(v):
                 # compress
@@ -103,28 +104,22 @@ class Resource(object):
                 tar.close()
                 
                 v = compressed_file_path
-            
+
             if not os.path.exists(v):
+                out.append(None)
                 continue
-            
-            if not k.startswith('FILE'):
-                k = 'FILE_'+k
-            files[k] = open(v, 'rb')
-            
-        if len(files) == 0:
-            return {'status': 'ERROR', 'message': 'no files'}
 
-        if self._rpc.data is not None and type(self._rpc.data) == dict:
-            kwargs.update(self._rpc.data)
-        
-        api_url = '%s/%s/upload/' % (self._rpc.url, self._resource)
+            content = open(v, 'rb')
+            api_url = '%s/%s/upload/' % (self._rpc.url, self._resource)
+            result = requests.post(api_url, files={"file": (os.path.basename(v), content, 'multipart/form-data')})
+            if result.status_code not in [200, 201]:
+                out.append(None)
+                continue
+            else:
+                response = json.loads(result.content)
+                out.append(response['fileid'])
 
-        result = requests.post(api_url, kwargs, files=files, headers=self._rpc.headers)
-        if result.status_code not in [200, 201]:
-            return {'status': 'ERROR'}
-
-        response = json.loads(result.content)
-        return response
+        return out
 
     def __mkdir_p(self, dirname):
         """ make a dir recursively, but do nothing if the dir exists"""
@@ -180,17 +175,28 @@ class Resource(object):
         download_file_name = ''
         if 'file_name' in kwargs:
             download_file_name = kwargs['file_name']
+            download_file_name = download_file_name.split('/')[-1]
 
         if 'file_folder' in kwargs:
             kwargs.pop('file_folder')
+        
+        is_bytes_io = False
+        if 'is_bytes_io' in kwargs:
+            is_bytes_io = kwargs['is_bytes_io']
+            kwargs.pop('is_bytes_io')
+
+        if download_file_name.endswith('.tar.gz'):
+            # 如果是压缩包形式，则不可以以bytesio存储
+            is_bytes_io = False
 
         if self._rpc.data is not None and type(self._rpc.data) == dict:
             for k, v in self._rpc.data.items():
                 if k not in kwargs:
                     kwargs.update({k: v})
-        
+
         file_api_url = '%s/%s/download/' % (self._rpc.url, self._resource)
         is_success = True
+        download_file_content = None
         try:
             r = requests.get(file_api_url, kwargs, stream=True, headers=self._rpc.headers)
             file_name = self.__get_file_name(r.headers)
@@ -200,10 +206,17 @@ class Resource(object):
             if download_file_name == '':
                 download_file_name = str(uuid.uuid4())
 
-            with open(os.path.join(to_folder, download_file_name), "wb") as pf:
-                for chunk in r.iter_content(chunk_size=1024):
-                    if chunk:
-                        pf.write(chunk)
+            if not is_bytes_io:
+                with open(os.path.join(to_folder, download_file_name), "wb") as pf:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        if chunk:
+                            pf.write(chunk)
+            else:
+                with io.BytesIO() as pf:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        if chunk:
+                            pf.write(chunk)
+                    download_file_content = pf.getvalue()
 
             logging.info('Successfully download {}'.format(download_file_name))
         except:
@@ -214,14 +227,18 @@ class Resource(object):
 
             is_success = False
 
+        if is_bytes_io:
+            return {'status': 'SUCCESS', 'file': download_file_content} if is_success else {'status': 'ERROR'} 
+
         if download_file_name.endswith('.tar.gz'):
             # uncompress
             tar = tarfile.open(os.path.join(to_folder, download_file_name))
             tar.extractall(to_folder)
             tar.close()
             logging.info('Successfully untar {}'.format(download_file_name))
+            download_file_name = download_file_name[:-7]
     
-        return {'status': 'SUCCESS'} if is_success else {'status': 'ERROR'}
+        return {'status': 'SUCCESS', 'file': download_file_name} if is_success else {'status': 'ERROR'}
     
     def __getattr__(self, action):
         if action not in ['get', 'post', 'put', 'patch', 'delete', 'upload', 'download']:
@@ -237,43 +254,59 @@ class Resource(object):
                 #     'http': None,
                 #     'https': None
                 # }
+                is_json_data = False
+                if 'Content-Type' in self._rpc.headers and 'json' in self._rpc.headers['Content-Type']:
+                    is_json_data = True
                 if action == 'get':
-                    result = requests.get(api_url, kwargs, headers=self._rpc.headers)
+                    if not is_json_data:
+                        result = requests.get(api_url, data=kwargs, headers=self._rpc.headers)
+                    else:
+                        result = requests.get(api_url, json=kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s'%(action, result.status_code, api_url))
                         return {'status': 'ERROR'}
                     response = json.loads(result.content)
                     return response
                 elif action == 'post':
-                    result = requests.post(api_url, kwargs, headers=self._rpc.headers)
+                    if not is_json_data:
+                        result = requests.post(api_url, data=kwargs, headers=self._rpc.headers)
+                    else:
+                        result = requests.post(api_url, json=kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s' % (action, result.status_code, api_url))
                         return {'status': 'ERROR'}
                     response = json.loads(result.content)
                     return response
                 elif action == 'put':
-                    result = requests.put(api_url, kwargs, headers=self._rpc.headers)
+                    if not is_json_data:
+                        result = requests.put(api_url, data=kwargs, headers=self._rpc.headers)
+                    else:
+                        result = requests.put(api_url, json=kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s' % (action, result.status_code, api_url))
                         return {'status': 'ERROR'}
                     response = json.loads(result.content)
                     return response
                 elif action == 'patch':
-                    result = requests.patch(api_url, kwargs, headers=self._rpc.headers)
+                    if not is_json_data:
+                        result = requests.patch(api_url, data=kwargs, headers=self._rpc.headers)
+                    else:
+                        result = requests.patch(api_url, json=kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s' % (action, result.status_code, api_url))
                         return {'status': 'ERROR'}
                     response = json.loads(result.content)
                     return response
                 elif action == 'delete':
-                    result = requests.delete(api_url, data=kwargs, headers=self._rpc.headers)
+                    if not is_json_data:
+                        result = requests.delete(api_url, data=kwargs, headers=self._rpc.headers)
+                    else:
+                        result = requests.delete(api_url, json=kwargs, headers=self._rpc.headers)
                     if result.status_code not in [200, 201]:
                         logging.error('(%s:%d) %s' % (action, result.status_code, api_url))
                         return {'status': 'ERROR'}
                     response = json.loads(result.content)
                     return response
-                elif action == 'upload':
-                    return None
                 else:
                     return None
             except:
@@ -290,6 +323,9 @@ class HttpRpc(object):
         self._version = version
         self._token = token
         self._data = kwargs
+        self._headers = {
+            'Authorization': "token " + token
+        }
     
     @property
     def version(self):
@@ -338,19 +374,22 @@ class HttpRpc(object):
     @token.setter
     def token(self, val):
         self._token = val
-        
+        self._headers.update(
+            {
+                'Authorization': "token " + val
+            }
+        )
+
     @property    
     def url(self):
-        request_url = 'http://%s:%d/%s' % (self.ip, self.port, self.prefix)
-        return request_url
+        if self.prefix == '':
+            return 'http://%s:%d' % (self.ip, self.port)
+
+        return 'http://%s:%d/%s' % (self.ip, self.port, self.prefix)
 
     @property
     def headers(self):
-        if self.token is None:
-            return None
-        
-        authorization = {'Authorization': "token " + self.token}
-        return authorization
+        return self._headers
     
     @property
     def data(self):
