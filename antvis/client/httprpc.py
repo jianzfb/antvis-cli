@@ -325,7 +325,7 @@ class HttpRpc(object):
         self._data = kwargs
         self._headers = {
             'Authorization': "token " + token
-        }
+        } if token is not None else {}
     
     @property
     def version(self):
