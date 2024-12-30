@@ -239,7 +239,7 @@ class Resource(object):
             download_file_name = download_file_name[:-7]
     
         return {'status': 'SUCCESS', 'file': download_file_name} if is_success else {'status': 'ERROR'}
-    
+
     def __getattr__(self, action):
         if action not in ['get', 'post', 'put', 'patch', 'delete', 'upload', 'download']:
             return Resource(self._rpc, '%s/%s' % (self._resource, action))
@@ -311,10 +311,10 @@ class Resource(object):
                     return None
             except:
                 return {'status': 'ERROR', 'message': 'connection error'}
-            
+
         return func
 
-        
+    
 class HttpRpc(object):
     def __init__(self, version, prefix, ip, port, token=None, **kwargs):
         self._ip = ip
@@ -326,51 +326,51 @@ class HttpRpc(object):
         self._headers = {
             'Authorization': "token " + token
         } if token is not None else {}
-    
+
     @property
     def version(self):
         return self._version
-    
+
     @version.setter
     def version(self, val):
         self._version = val
-    
+
     @property
     def ip(self):
         return self._ip
-    
+
     @ip.setter
     def ip(self, val):
         self._ip = val
-    
+
     @property
     def port(self):
         return self._port
-    
+
     @port.setter
     def port(self,val):
         self._port = val
-    
+
     @property
     def prefix(self):
         return self._prefix
-    
+
     @prefix.setter
     def prefix(self, val):
         self._prefix = val
-    
+
     @property
     def version(self):
         return self._version
-    
+
     @version.setter
     def version(self, val):
         self._version = val
-    
+
     @property
     def token(self):
         return self._token
-    
+
     @token.setter
     def token(self, val):
         self._token = val
@@ -379,6 +379,11 @@ class HttpRpc(object):
                 'Authorization': "token " + val
             }
         )
+
+    def switchmodeto(self, mode):
+        self._headers.update({
+            'Content-Type': f'application/{mode}'
+        })
 
     @property    
     def url(self):
@@ -390,14 +395,14 @@ class HttpRpc(object):
     @property
     def headers(self):
         return self._headers
-    
+
     @property
     def data(self):
         return self._data
-    
+
     @data.setter
     def data(self, val):
         self._data = val
-    
+
     def __getattr__(self, resource):
         return Resource(self, resource)

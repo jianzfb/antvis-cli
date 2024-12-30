@@ -142,9 +142,10 @@ class Dashboard(object):
         return self.job.create_chart(chart_channels, chart_title, chart_x_axis, chart_y_axis, **kwargs)
     
     def create_project(self, *args, **kwargs):
+        #  重复调用，将覆盖当前激活的experiment_uuid
         # 1.step 配置dashboard
         self.configure(*args, **kwargs)
-        
+
         # 2.step 创建项目(获得 experiment_uuid)
         response = \
             self.rpc.experiment.post(task_name=self.project,
@@ -152,6 +153,7 @@ class Dashboard(object):
                                      auto_suffix=kwargs.get('auto_suffix', False))
         experiment_uuid = None
         if response['status'] == "OK":
+            # 成功创建实验
             experiment_uuid = response['content']['experiment_uuid']
             self.experiment_uuid = experiment_uuid
 
@@ -159,10 +161,16 @@ class Dashboard(object):
             self.experiment_name = experiment_name
 
             self.rpc.data.update({'experiment_uuid': experiment_uuid})
-            logging.info('Success to create %s/%s'%(self.project, self.experiment_name))
+            experiment_is_new = response['content'].get('experiment_is_new', False)
+            if experiment_is_new:
+                logging.info(f'Success to create {self.project}/{self.experiment_name} experiment in dashboard')
+            else:
+                logging.info(f'Success to activate {self.project}/{self.experiment_name} experiment in dashboard')
         else:
+            # 失败创建实验
+            # （1）重名；（2）链接错误
             self.experiment_uuid = None
-            logging.error('Fail to register experiment in dashboard')
+            logging.error(f'Fail to register {self.project}/{self.experiment_name} experiment in dashboard')
 
         return experiment_uuid
 

@@ -28,6 +28,14 @@ class __Env(object):
 
         self.cache_upload_token = {}
 
+    @property
+    def experiment_name(self):
+        return self.dashboard.experiment_name
+
+    @property
+    def experiment_uuid(self):
+        return self.dashboard.experiment_uuid
+
     def create_chart(self, *args, **kwargs):
         return self.dashboard.create_chart(*args, **kwargs)
         
@@ -68,6 +76,7 @@ def config(project=None, experiment=None, token=None, **kwargs):
     global __env
     __env = __Env(project, experiment, token, **kwargs)
     Variable.env = __env
+    return __env.experiment_name
 
 def is_ready():
     global __env
