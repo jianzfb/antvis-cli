@@ -8,10 +8,10 @@ from __future__ import print_function
 
 import atexit
 import sys
-from . import mlogger
 import logging
 import signal
 import traceback
+from . import mlogger
 
 
 def handle_exit():
@@ -51,9 +51,3 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     mlogger.error()
     # print log
     logging.error('Error {}/{} experiment logger'.format(project, experiment))
-
-
-sys.excepthook = handle_exception
-atexit.register(handle_exit)
-signal.signal(signal.SIGTERM, handle_exception)
-signal.signal(signal.SIGINT, handle_exception)
